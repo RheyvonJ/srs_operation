@@ -31,6 +31,22 @@
 $ npm install
 ```
 
+## Application login
+
+Login uses `APP_LOGIN_USERNAME` and `APP_LOGIN_PASSWORD` from the backend
+environment. The credentials do not need to exist in MySQL. A successful
+`POST /auth/login` opens the frontend dashboard; incorrect credentials are
+rejected. Login does not query or modify any database table.
+
+Set the application credentials in the ignored local `.env` file. Never commit
+`.env`; use strong credentials outside local development. The backend's Knex
+MySQL connection remains available for future data APIs and is configured
+separately with `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD`.
+
+Run the API on port 3001 with `npm run start:dev`. The frontend should use
+`NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:3001`. The login endpoint is
+`POST /auth/login` with JSON `{ "username": "...", "password": "..." }`.
+
 ## Compile and run the project
 
 ```bash

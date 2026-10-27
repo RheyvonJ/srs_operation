@@ -12,6 +12,11 @@ import {
   ShoppingCart,
   X,
 } from 'lucide-react';
+import { SupplierApvForm } from './SupplierApvForm';
+import { SupplierCvDebitForm } from './SupplierCvDebitForm';
+import { ConsignmentSales } from './ConsignmentSales';
+import { PurchaseOrderForm } from './PurchaseOrderForm';
+import { SupplierRsInquiry } from './SupplierRsInquiry';
 
 interface DashboardProps {
   username: string;
@@ -55,27 +60,27 @@ type FolderItem = (typeof folderItems)[number];
 type FolderItemId = FolderItem['id'];
 
 const ItemPanel: React.FC<{ item: FolderItem }> = ({ item }) => {
-  const Icon = item.icon;
+  if (item.id === 'cv-debit') {
+    return <SupplierCvDebitForm />;
+  }
 
-  return (
-    <section className="mt-6 overflow-hidden rounded-2xl border border-[#E6E0D6] bg-[#FFFCF8] shadow-sm">
-      <div className="flex items-center gap-3 border-b border-[#E6E0D6] bg-[#0D1B2A] px-4 py-4 sm:px-6">
-        <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#E5383B] text-white">
-          <Icon className="h-5 w-5" />
-        </span>
-        <div className="min-w-0">
-          <p className="font-heading text-sm font-bold text-white truncate">{item.name}</p>
-          <p className="text-[11px] text-[#FFD166]">Supplier & Transactions</p>
-        </div>
-      </div>
-      <div className="px-4 py-10 sm:px-6 text-center">
-        <p className="font-heading text-base font-bold text-[#0D1B2A]">This folder is empty</p>
-        <p className="mx-auto mt-2 max-w-md text-sm text-[#6E675E]">
-          {item.name} is open and ready. Records will show here when they are added.
-        </p>
-      </div>
-    </section>
-  );
+  if (item.id === 'apv') {
+    return <SupplierApvForm />;
+  }
+
+  if (item.id === 'rs') {
+    return <SupplierRsInquiry />;
+  }
+
+  if (item.id === 'po') {
+    return <PurchaseOrderForm />;
+  }
+
+  if (item.id === 'consignment') {
+    return <ConsignmentSales />;
+  }
+
+  return null;
 };
 
 export const Dashboard: React.FC<DashboardProps> = ({ username, onLogout }) => {
@@ -233,7 +238,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ username, onLogout }) => {
             <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div className="min-w-0">
                 <h2 className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0D1B2A]">
-                  {selected ? selected.name : 'Supplier & Transactions'}
+                  {selected
+                    ? selected.id === 'rs' ? 'Return to Supplier Inquiry' : selected.name
+                    : 'Supplier & Transactions'}
                 </h2>
                 <p className="mt-1 text-sm text-[#6E675E]">
                   {selected

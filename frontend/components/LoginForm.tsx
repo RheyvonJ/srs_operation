@@ -40,7 +40,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMsg(null);
 
@@ -53,20 +53,44 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
       setErrorMsg('Please enter your retail account password.');
       return;
     }
-    if (password.length < 6) {
-      setErrorMsg('Retail system passwords must be at least 6 characters.');
-      return;
-    }
-
     setIsLoading(true);
 
-    // Realistic authentication flow simulation
-    setTimeout(() => {
-      setIsLoading(false);
-      onSuccess({
-        username,
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://127.0.0.1:3001';
+      const response = await fetch(`${apiBaseUrl}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim(), password }),
       });
-    }, 750);
+      const result = await response.json() as {
+        username?: string;
+        displayName?: string;
+        message?: string | string[];
+      };
+
+      if (!response.ok) {
+        setErrorMsg(
+          response.status === 401
+            ? 'Invalid username or password.'
+            : Array.isArray(result.message)
+              ? result.message.join(' ')
+              : result.message ?? 'Authentication service is unavailable.',
+        );
+        return;
+      }
+
+      onSuccess({
+        username: result.displayName || result.username || username.trim(),
+      });
+    } catch (error) {
+      setErrorMsg(
+        error instanceof TypeError
+          ? 'Could not connect to the authentication server.'
+          : 'The authentication server returned an invalid response.',
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
