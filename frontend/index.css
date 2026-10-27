@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  --font-heading: 'Montserrat', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Anton', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, 'Segoe UI', sans-serif;
+  --font-roboto: 'Roboto', 'Segoe UI', system-ui, sans-serif;
+
+  --color-retail-red: #E5383B;
+  --color-retail-navy: #0D1B2A;
+  --color-retail-yellow: #FFD166;
+  --color-retail-charcoal: #212529;
+  --color-retail-white: #F7F4EF;
+}
+
+body {
+  font-family: 'Inter', system-ui, 'Segoe UI', sans-serif;
+  color: #212529;
+  background-color: #F7F4EF;
+}
+
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: 'Montserrat', 'Segoe UI', system-ui, sans-serif;
+}
+
+.font-anton {
+  font-family: 'Anton', sans-serif;
+}
+
+.font-roboto {
+  font-family: 'Roboto', sans-serif;
+}
