@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { BranchLoadError, BranchSelect } from './BranchSelect';
-import { bir2307PrintPath, type Bir2307Target } from './bir2307Print';
+import { bir2307PrintPath, cvViewPath, type Bir2307Target } from './bir2307Print';
 
 interface SupplierLookupFormProps {
   documentName: string;
@@ -30,6 +30,8 @@ interface SupplierCvLine {
   cvNumber: string;
   csvDate: string;
   dueDate: string;
+  cvId: number | null;
+  branch: number | null;
   bir: Bir2307Target | null;
 }
 
@@ -205,7 +207,20 @@ export const SupplierLookupForm: React.FC<SupplierLookupFormProps> = ({
                     <td className="border border-[#E6E0D6] px-3 py-3 text-right">{row.line}</td>
                     <td className="whitespace-nowrap border border-[#E6E0D6] px-3 py-3">{row.cvDate}</td>
                     <td className="whitespace-nowrap border border-[#E6E0D6] px-3 py-3">{row.supplierName}</td>
-                    <td className="whitespace-nowrap border border-[#E6E0D6] px-3 py-3 font-semibold">{row.reference}</td>
+                    <td className="whitespace-nowrap border border-[#E6E0D6] px-3 py-3 font-semibold">
+                      {row.cvId && row.branch !== null ? (
+                        <a
+                          href={cvViewPath(row.branch, row.cvId)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#0D1B2A] underline"
+                        >
+                          {row.reference}
+                        </a>
+                      ) : (
+                        row.reference
+                      )}
+                    </td>
                     <td className="whitespace-nowrap border border-[#E6E0D6] px-3 py-3 text-right">{formatAmount(row.amount)}</td>
                     <td className="whitespace-nowrap border border-[#E6E0D6] px-3 py-3">{row.invoiceNumber}</td>
                     <td className="whitespace-nowrap border border-[#E6E0D6] px-3 py-3">{row.poNumber}</td>

@@ -18,3 +18,11 @@ export function bir2307PrintPath(target: Bir2307Target): string {
   });
   return `${BIR_2307_BASE}/gl/2307_pdf_per_trans.php?${params.toString()}`;
 }
+
+export function cvViewPath(branch: number, cvId: number): string {
+  const params = new URLSearchParams({
+    trans_no: String(cvId),
+    branch: String(branch),
+  });
+  return `/purchasing/view/view-cv?${params.toString()}`;
+}

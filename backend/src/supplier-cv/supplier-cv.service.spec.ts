@@ -93,6 +93,7 @@ describe('SupplierCvService', () => {
             cvNumber: '1634440',
             csvDate: null,
             dueDate: '2026-10-14',
+            cvId: 88001,
             transNo: 158335,
             supplierId: 44,
           },
@@ -115,6 +116,8 @@ describe('SupplierCvService', () => {
           cvNumber: '1634440',
           csvDate: '',
           dueDate: '2026-10-14',
+          cvId: 88001,
+          branch: 4,
           bir: { branch: 4, type: 24, transNo: 900, supplierId: 44 },
         },
       ],
@@ -123,9 +126,106 @@ describe('SupplierCvService', () => {
 
     const cvQuery = calls.find((call) => call.sql.includes('0_cv_header'));
     expect(cvQuery?.sql).toContain('`srs_aria_nova`.`0_cv_header`');
+    expect(cvQuery?.sql).toContain('cv.id AS cvId');
     expect(cvQuery?.sql).toContain("st.type = '20'");
     expect(cvQuery?.sql).toContain('cv.amount > 0');
     expect(cvQuery?.bindings).toEqual(['2026-10-09', '2026-10-09', 15, '%1634%']);
+  });
+});
+
+describe('viewCheckVoucher', () => {
+  it('builds the check voucher from the header, memo, and detail lines', async () => {
+    const { db, calls } = createDb([
+      {
+        includes: '0_branches',
+        rows: [
+          { id: 4, configDbKey: 0, ariaDb: 'srs_aria_tondo' },
+          { id: 1, configDbKey: 4, ariaDb: 'srs_aria_nova' },
+        ],
+      },
+      {
+        includes: '0_cv_header',
+        rows: [
+          {
+            cvNo: '1634354',
+            cvDate: '2026-10-09',
+            supplierName: 'Sample Supplier',
+            amount: 2175.22,
+            ewt: 61.51,
+          },
+        ],
+      },
+      {
+        includes: '0_cv_details',
+        rows: [
+          {
+            transType: 20,
+            transNo: 158335,
+            amount: 6827.32,
+            tranDate: '2026-10-09',
+            reference: '200197',
+            suppReference: '45281',
+            ewt: 61.51,
+          },
+          {
+            transType: 53,
+            transNo: 229582,
+            amount: -1503.68,
+            tranDate: '2026-10-07',
+            reference: '227005',
+            suppReference: 'RS#214868',
+            ewt: 0,
+          },
+          {
+            transType: 22,
+            transNo: 900,
+            amount: 100,
+            tranDate: '2026-10-09',
+            reference: 'CHK-1',
+            suppReference: '',
+            ewt: 0,
+          },
+        ],
+      },
+      { includes: '0_comments', rows: [{ memo: 'Administrator' }] },
+    ]);
+    const service = new SupplierCvService(db);
+
+    await expect(service.viewCheckVoucher({ branch: '4', trans_no: '158060' })).resolves.toEqual({
+      cvNo: '1634354',
+      cvDate: '2026-10-09',
+      supplierName: 'Sample Supplier',
+      amount: 2175.22,
+      ewt: 61.51,
+      comments: ['Administrator'],
+      lines: [
+        {
+          transType: 'Supplier Invoice',
+          transactionNumber: '200197',
+          date: '2026-10-09',
+          supplierInvoice: 'Supp Inv. # 45281',
+          amount: 6888.83,
+        },
+        {
+          transType: 'Supplier Debit Memo',
+          transactionNumber: '227005',
+          date: '2026-10-07',
+          supplierInvoice: 'Supp Inv. # RS#214868',
+          amount: -1503.68,
+        },
+        {
+          transType: 'Supplier Payment',
+          transactionNumber: '900',
+          date: '2026-10-09',
+          supplierInvoice: '',
+          amount: 100,
+        },
+      ],
+    });
+
+    const headerQuery = calls.find((call) => call.sql.includes('0_cv_header'));
+    expect(headerQuery?.sql).toContain('`srs_aria_nova`.`0_cv_header`');
+    expect(headerQuery?.bindings).toEqual([158060]);
   });
 });
 

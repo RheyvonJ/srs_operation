@@ -1,10 +1,12 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpException,
   Logger,
   Post,
+  Query,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { SupplierCvService } from './supplier-cv.service.js';
@@ -28,6 +30,23 @@ export class SupplierCvController {
       );
       throw new ServiceUnavailableException(
         'Could not load Supplier CV records. Please check the server connection.',
+      );
+    }
+  }
+
+  @Get('view')
+  @HttpCode(200)
+  async view(@Query() query: Record<string, unknown>) {
+    try {
+      return await this.supplierCvService.viewCheckVoucher(query);
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error(
+        'Failed to load the check voucher',
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw new ServiceUnavailableException(
+        'Could not load the check voucher. Please check the server connection.',
       );
     }
   }
