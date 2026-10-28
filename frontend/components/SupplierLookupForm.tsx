@@ -6,7 +6,17 @@ import { bir2307PrintPath, type Bir2307Target } from './bir2307Print';
 interface SupplierLookupFormProps {
   documentName: string;
   includeCvNumber?: boolean;
-  lookup?: 'cv';
+  lookup?: 'cv' | 'apv';
+}
+
+interface SupplierApvLine {
+  line: number;
+  transDate: string;
+  supplierName: string;
+  amount: number;
+  invoiceNumber: string;
+  poNumber: string;
+  bir: Bir2307Target | null;
 }
 
 interface SupplierCvLine {
@@ -26,18 +36,19 @@ interface SupplierCvLine {
 const inputClassName =
   'h-9 min-w-0 rounded-xl border border-[#E0D9CC] bg-white px-3 text-sm font-medium text-[#212529] shadow-xs focus:border-[#E5383B] focus:outline-none focus:ring-2 focus:ring-[#E5383B]/20';
 
-const connectionError = 'Could not load Supplier CV records. Please check the server connection.';
+const cvConnectionError = 'Could not load Supplier CV records. Please check the server connection.';
+const apvConnectionError = 'Could not load Supplier APV records. Please check the server connection.';
 
 function formatAmount(amount: number): string {
   return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function messageFromBody(body: unknown): string {
-  if (!body || typeof body !== 'object' || !('message' in body)) return connectionError;
+function messageFromBody(body: unknown, fallback: string): string {
+  if (!body || typeof body !== 'object' || !('message' in body)) return fallback;
   const message = (body as { message?: unknown }).message;
   if (typeof message === 'string' && message.trim()) return message;
   if (Array.isArray(message)) return message.join(' ');
-  return connectionError;
+  return fallback;
 }
 
 export const SupplierLookupForm: React.FC<SupplierLookupFormProps> = ({
@@ -49,18 +60,22 @@ export const SupplierLookupForm: React.FC<SupplierLookupFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rows, setRows] = useState<SupplierCvLine[]>([]);
+  const [apvRows, setApvRows] = useState<SupplierApvLine[]>([]);
   const [total, setTotal] = useState(0);
   const now = new Date();
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-  const searchCv = async (form: HTMLFormElement) => {
+  const searchRecords = async (form: HTMLFormElement) => {
+    if (lookup !== 'cv' && lookup !== 'apv') return;
     const data = new FormData(form);
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://127.0.0.1:3001';
+    const fallback = lookup === 'apv' ? apvConnectionError : cvConnectionError;
     setLoading(true);
     setError(null);
     setRows([]);
+    setApvRows([]);
     try {
-      const response = await fetch(`${apiBaseUrl}/supplier-cv/search`, {
+      const response = await fetch(`${apiBaseUrl}/supplier-${lookup}/search`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -74,16 +89,17 @@ export const SupplierLookupForm: React.FC<SupplierLookupFormProps> = ({
         }),
       });
       const body = (await response.json().catch(() => null)) as
-        | { rows?: SupplierCvLine[]; total?: number; message?: unknown }
+        | { rows?: SupplierCvLine[] | SupplierApvLine[]; total?: number; message?: unknown }
         | null;
       if (!response.ok || !body || !Array.isArray(body.rows)) {
-        setError(messageFromBody(body));
+        setError(messageFromBody(body, fallback));
         return;
       }
-      setRows(body.rows);
+      if (lookup === 'apv') setApvRows(body.rows as SupplierApvLine[]);
+      else setRows(body.rows as SupplierCvLine[]);
       setTotal(typeof body.total === 'number' ? body.total : 0);
     } catch {
-      setError(connectionError);
+      setError(fallback);
     } finally {
       setLoading(false);
     }
@@ -96,8 +112,8 @@ export const SupplierLookupForm: React.FC<SupplierLookupFormProps> = ({
         onSubmit={(event) => {
           event.preventDefault();
           setSubmitted(true);
-          if (lookup === 'cv') {
-            void searchCv(event.currentTarget);
+          if (lookup === 'cv' || lookup === 'apv') {
+            void searchRecords(event.currentTarget);
           }
         }}
       >
@@ -148,12 +164,12 @@ export const SupplierLookupForm: React.FC<SupplierLookupFormProps> = ({
             <CheckCircle2 className="h-4 w-4 text-[#FFD166]" />
             {loading ? 'Loading...' : `Display ${documentName}`}
           </button>
-          {lookup === 'cv' && error && (
+          {(lookup === 'cv' || lookup === 'apv') && error && (
             <p role="alert" className="rounded-xl border border-[#E5383B]/25 bg-[#FDECEC] px-4 py-3 text-center text-xs font-medium text-[#E5383B]">
               {error}
             </p>
           )}
-          {lookup !== 'cv' && submitted && (
+          {lookup !== 'cv' && lookup !== 'apv' && submitted && (
             <p role="status" className="rounded-xl border border-[#F0D48A] bg-[#FFF8E6] px-4 py-3 text-center text-xs font-medium text-[#6A5420]">
               {documentName} records are not connected yet.
             </p>
@@ -215,6 +231,59 @@ export const SupplierLookupForm: React.FC<SupplierLookupFormProps> = ({
                   <td className="border border-[#E6E0D6] px-3 py-3 text-right">TOTAL:</td>
                   <td className="border border-[#E6E0D6] px-3 py-3 text-right">{formatAmount(total)}</td>
                   <td className="border border-[#E6E0D6] px-3 py-3" colSpan={6} />
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {lookup === 'apv' && apvRows.length > 0 && (
+        <div className="px-4 pb-6 sm:px-6">
+          <h3 className="mb-3 text-center font-heading text-sm font-extrabold text-[#0D1B2A]">
+            Supplier APV
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] border-collapse text-xs">
+              <thead className="bg-[#0D1B2A] text-white">
+                <tr>
+                  <th className="border border-[#1E3348] px-3 py-3 text-right" aria-label="Line" />
+                  <th className="border border-[#1E3348] px-3 py-3 text-left">Trans Date</th>
+                  <th className="border border-[#1E3348] px-3 py-3 text-left">Supplier Name</th>
+                  <th className="border border-[#1E3348] px-3 py-3 text-right">Amount</th>
+                  <th className="border border-[#1E3348] px-3 py-3 text-left">Invoice#</th>
+                  <th className="border border-[#1E3348] px-3 py-3 text-left">PO#</th>
+                  <th className="border border-[#1E3348] px-3 py-3 text-left">BIR 2307</th>
+                </tr>
+              </thead>
+              <tbody>
+                {apvRows.map((row) => (
+                  <tr key={`${row.line}-${row.invoiceNumber}-${row.poNumber}`} className="text-[#212529]">
+                    <td className="border border-[#E6E0D6] px-3 py-3 text-right">{row.line}</td>
+                    <td className="whitespace-nowrap border border-[#E6E0D6] px-3 py-3">{row.transDate}</td>
+                    <td className="whitespace-nowrap border border-[#E6E0D6] px-3 py-3">{row.supplierName}</td>
+                    <td className="whitespace-nowrap border border-[#E6E0D6] px-3 py-3 text-right">{formatAmount(row.amount)}</td>
+                    <td className="whitespace-nowrap border border-[#E6E0D6] px-3 py-3">{row.invoiceNumber}</td>
+                    <td className="whitespace-nowrap border border-[#E6E0D6] px-3 py-3">{row.poNumber}</td>
+                    <td className="whitespace-nowrap border border-[#E6E0D6] px-3 py-3">
+                      {row.bir ? (
+                        <a
+                          href={bir2307PrintPath(row.bir)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-bold text-[#0D1B2A] underline"
+                        >
+                          Print
+                        </a>
+                      ) : null}
+                    </td>
+                  </tr>
+                ))}
+                <tr className="bg-[#F7F4EF] font-semibold text-[#880000]">
+                  <td className="border border-[#E6E0D6] px-3 py-3" colSpan={2} />
+                  <td className="border border-[#E6E0D6] px-3 py-3 text-right">TOTAL:</td>
+                  <td className="border border-[#E6E0D6] px-3 py-3 text-right">{formatAmount(total)}</td>
+                  <td className="border border-[#E6E0D6] px-3 py-3" colSpan={3} />
                 </tr>
               </tbody>
             </table>

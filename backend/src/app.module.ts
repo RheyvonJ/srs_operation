@@ -6,10 +6,17 @@ import { AuthController } from './auth/auth.controller.js';
 import { AuthService } from './auth/auth.service.js';
 import { BranchesModule } from './branches/branches.module.js';
 import { DatabaseModule } from './database/database.module.js';
+import { SupplierApvModule } from './supplier-apv/supplier-apv.module.js';
 import { SupplierCvModule } from './supplier-cv/supplier-cv.module.js';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), DatabaseModule, BranchesModule, SupplierCvModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    DatabaseModule,
+    BranchesModule,
+    SupplierCvModule,
+    SupplierApvModule,
+  ],
   controllers: [AppController, AuthController],
   providers: [AppService, AuthService],
 })
