@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
+import { BranchLoadError, BranchSelect } from './BranchSelect';
 
 const months = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -20,10 +21,7 @@ export const ConsignmentSales: React.FC = () => {
         }}
       >
         <label htmlFor="consignment-branch">Branch:</label>
-        <select id="consignment-branch" name="branch" defaultValue="" className="h-9 min-w-36 rounded-xl border border-[#E0D9CC] bg-white px-3 text-sm font-medium text-[#212529] shadow-xs focus:border-[#E5383B] focus:outline-none focus:ring-2 focus:ring-[#E5383B]/20">
-          <option value="">Select Branch</option>
-          <option value="nova">NOVA</option>
-        </select>
+        <BranchSelect id="consignment-branch" />
 
         <label htmlFor="consignment-status">Status:</label>
         <select id="consignment-status" name="status" defaultValue="all" className="h-9 rounded-xl border border-[#E0D9CC] bg-white px-3 text-sm font-medium text-[#212529] shadow-xs focus:border-[#E5383B] focus:outline-none focus:ring-2 focus:ring-[#E5383B]/20">
@@ -48,6 +46,7 @@ export const ConsignmentSales: React.FC = () => {
           <Search className="h-3.5 w-3.5" />
           Search
         </button>
+        <BranchLoadError />
       </form>
 
       <div className="mt-6 overflow-x-auto">

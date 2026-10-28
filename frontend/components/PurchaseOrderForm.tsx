@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
+import { BranchLoadError, BranchSelect } from './BranchSelect';
 
 export const PurchaseOrderForm: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
@@ -17,15 +18,13 @@ export const PurchaseOrderForm: React.FC = () => {
       >
         <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-3 text-xs font-semibold text-[#0D1B2A]">
           <label htmlFor="po-branch">Branch:</label>
-          <select id="po-branch" name="branch" defaultValue="all" className="h-9 min-w-36 rounded-xl border border-[#E0D9CC] bg-white px-3 text-sm font-medium text-[#212529] shadow-xs focus:border-[#E5383B] focus:outline-none focus:ring-2 focus:ring-[#E5383B]/20">
-            <option value="all">All Branches</option>
-            <option value="nova">NOVA</option>
-          </select>
+          <BranchSelect id="po-branch" emptyValue="all" emptyLabel="All Branches" />
           <label htmlFor="po-from" className="sm:ml-1">From:</label>
           <input id="po-from" name="from" type="date" defaultValue={today} className="h-9 rounded-xl border border-[#E0D9CC] bg-white px-3 text-sm font-medium text-[#212529] shadow-xs focus:border-[#E5383B] focus:outline-none focus:ring-2 focus:ring-[#E5383B]/20" />
           <label htmlFor="po-to">To:</label>
           <input id="po-to" name="to" type="date" defaultValue={today} className="h-9 rounded-xl border border-[#E0D9CC] bg-white px-3 text-sm font-medium text-[#212529] shadow-xs focus:border-[#E5383B] focus:outline-none focus:ring-2 focus:ring-[#E5383B]/20" />
         </div>
+        <BranchLoadError />
 
         <div className="mx-auto mt-6 grid max-w-md grid-cols-[max-content_minmax(0,1fr)] items-center gap-x-3 gap-y-3 text-xs font-semibold text-[#0D1B2A]">
           <label htmlFor="po-supplier-tin" className="text-right">Supplier TIN #:</label>

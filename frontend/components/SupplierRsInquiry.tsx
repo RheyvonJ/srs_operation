@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search } from 'lucide-react';
+import { BranchLoadError, BranchSelect } from './BranchSelect';
 
 export const SupplierRsInquiry: React.FC = () => {
   const now = new Date();
@@ -14,10 +15,7 @@ export const SupplierRsInquiry: React.FC = () => {
         }}
       >
         <label htmlFor="rs-branch">Branch:</label>
-        <select id="rs-branch" name="branch" defaultValue="" className="h-9 min-w-36 rounded-xl border border-[#E0D9CC] bg-white px-3 text-sm font-medium text-[#212529] shadow-xs focus:border-[#E5383B] focus:outline-none focus:ring-2 focus:ring-[#E5383B]/20">
-          <option value="">Select Branch</option>
-          <option value="nova">NOVA</option>
-        </select>
+        <BranchSelect id="rs-branch" />
 
         <label htmlFor="rs-number">RS#:</label>
         <input id="rs-number" name="rsNumber" type="text" className="h-9 w-32 rounded-xl border border-[#E0D9CC] bg-white px-3 text-sm font-medium text-[#212529] shadow-xs focus:border-[#E5383B] focus:outline-none focus:ring-2 focus:ring-[#E5383B]/20" />
@@ -36,6 +34,7 @@ export const SupplierRsInquiry: React.FC = () => {
           <Search className="h-3.5 w-3.5" />
           Search
         </button>
+        <BranchLoadError />
       </form>
 
       <p role="status" className="mx-auto mt-8 max-w-md rounded-xl border border-[#E6E0D6] bg-[#F7F4EF] px-4 py-4 text-center font-heading text-sm font-bold text-[#0D1B2A]">
