@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { ShoppingCart, ShieldCheck, Store, Sparkles, Building2, MapPin, Users, Layers, Briefcase } from 'lucide-react';
 
 const recordHighlights = [
@@ -15,11 +16,14 @@ export const BrandHero: React.FC = () => {
     <div className="relative flex h-full min-h-[660px] w-full flex-col justify-between overflow-hidden bg-[#212121] p-8 text-white xl:p-12">
       <div className="absolute inset-0 z-0">
         {!imageError ? (
-          <img
+          <Image
             src="/san-roque-store.jpg"
             alt=""
+            fill
+            priority
+            sizes="(min-width: 1024px) 50vw, 100vw"
             onError={() => setImageError(true)}
-            className="h-full w-full object-cover object-[center_70%] brightness-75 contrast-105"
+            className="object-cover object-[center_70%] brightness-75 contrast-105"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#212121] via-[#2C2C2C] to-[#424242]">

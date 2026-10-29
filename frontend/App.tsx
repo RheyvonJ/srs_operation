@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { BrandHero } from './components/BrandHero';
 import { LoginForm } from './components/LoginForm';
 import { Dashboard } from './components/Dashboard';
@@ -30,9 +31,11 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex items-center gap-4">
           <div className="flex items-center gap-2.5">
             <span className="inline-flex shrink-0 overflow-hidden rounded-2xl bg-white p-1">
-              <img
+              <Image
                 src="/srs-logo.png"
                 alt="San Roque Supermarket"
+                width={270}
+                height={212}
                 className="h-8 w-auto object-contain"
               />
             </span>
