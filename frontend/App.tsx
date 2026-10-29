@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { BrandHero } from './components/BrandHero';
+import { ACTIVITY_KEY, IDLE_LIMIT_MS, touchActivity } from './components/IdleActivity';
 import { LoginForm } from './components/LoginForm';
 import { Dashboard } from './components/Dashboard';
 
@@ -10,12 +11,39 @@ export default function App() {
   const [session, setSession] = useState<{
     username: string;
   } | null>(null);
+  const [idleNotice, setIdleNotice] = useState(false);
+
+  useEffect(() => {
+    if (!session) return;
+    const signOut = () => {
+      setIdleNotice(true);
+      setSession(null);
+    };
+    const check = () => {
+      const last = Number(localStorage.getItem(ACTIVITY_KEY) || 0);
+      if (!last || Date.now() - last >= IDLE_LIMIT_MS) signOut();
+    };
+    const timer = window.setInterval(check, 1000);
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === ACTIVITY_KEY) check();
+    };
+    window.addEventListener('storage', onStorage);
+    document.addEventListener('visibilitychange', check);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('storage', onStorage);
+      document.removeEventListener('visibilitychange', check);
+    };
+  }, [session]);
 
   const handleLoginSuccess = (data: { username: string }) => {
+    touchActivity();
+    setIdleNotice(false);
     setSession(data);
   };
 
   const handleLogout = () => {
+    setIdleNotice(false);
     setSession(null);
   };
 
@@ -76,6 +104,11 @@ export default function App() {
                 </svg>
               </div>
               <div className="relative z-10 w-full">
+                {idleNotice && (
+                  <p role="status" className="mx-auto mb-4 max-w-[460px] rounded-xl border border-[#FFCC80] bg-[#FFF3E0] px-4 py-3 text-center text-xs font-medium text-[#E65100]">
+                    You were signed out after 1 minute of inactivity.
+                  </p>
+                )}
                 <LoginForm onSuccess={handleLoginSuccess} />
               </div>
             </div>

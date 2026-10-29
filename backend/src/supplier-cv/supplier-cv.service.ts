@@ -43,6 +43,37 @@ export interface CheckVoucher {
   lines: CheckVoucherLine[];
 }
 
+export interface Bir2307DateParts {
+  month: string;
+  day: string;
+  year: string;
+}
+
+export interface Bir2307Line {
+  atc: string;
+  tax: number;
+}
+
+export interface Bir2307Form {
+  periodFrom: Bir2307DateParts;
+  periodTo: Bir2307DateParts;
+  quarterSlot: 1 | 2 | 3 | null;
+  payeeTin: [string, string, string, string];
+  payeeName: string;
+  payeeAddress: string;
+  payeeZip: string;
+  payorTin: [string, string, string, string];
+  payorName: string;
+  payorAddress: string;
+  payorZip: string;
+  supplierInvoice: string;
+  lines: Bir2307Line[];
+  income: number;
+  tax: number;
+  signatory: string;
+  signatoryTitle: string;
+}
+
 export interface SupplierCvResult {
   rows: SupplierCvLine[];
   total: number;
@@ -105,6 +136,31 @@ function signedMoney(value: unknown): number {
   return Math.round(amount * 100) / 100;
 }
 
+const PAYEE_ZIP_BY_REFERENCE: Record<string, string> = {
+  FIPGEI001: '1600',
+  FIPGEI003: '1600',
+  CEPAFOO004: '1600',
+  CEPAFO003: '1600',
+  CEPAFO001: '1600',
+  CEPAFOO003: '1600',
+  CEPAFOO002: '1600',
+  NUSNFC001: '1125',
+  BIININ001: '1400',
+  STSNFC001: '3020',
+};
+
+const PAYOR = {
+  tin: ['007', '492', '840', '000'] as [string, string, string, string],
+  name: 'SAN ROQUE SUPERMARKET RETAIL SYSTEMS INC.',
+  address: 'Dumalay St. cor., Quirino Highway Brgy. Sta Monica Novaliches Quezon City',
+  zip: '1123',
+};
+
+const SIGNATORY = {
+  name: 'Shena O. Matira',
+  title: 'Accounting Head / 199-683-987',
+};
+
 const SUPPLIER_PAYMENT = 22;
 const CV_COMMENT_TYPE = 99;
 const TRANS_TYPE_NAMES: Record<number, string> = {
@@ -127,6 +183,59 @@ const TRANS_TYPE_NAMES: Record<number, string> = {
   53: 'Supplier Debit Memo',
   54: 'Supplier Credit Memo',
 };
+
+function blankDate(): Bir2307DateParts {
+  return { month: '', day: '', year: '' };
+}
+
+function decodeHtml(value: string): string {
+  return value
+    .replace(/&#(\d+);/g, (match, digits: string) => {
+      const code = Number(digits);
+      return Number.isInteger(code) && code >= 0 && code <= 0x10ffff ? String.fromCodePoint(code) : match;
+    })
+    .replace(/&#x([0-9a-f]+);/gi, (match, digits: string) => {
+      const code = Number.parseInt(digits, 16);
+      return Number.isInteger(code) && code >= 0 && code <= 0x10ffff ? String.fromCodePoint(code) : match;
+    })
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;|&apos;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+}
+
+function payeeName(payTo: string, suppName: string): string {
+  if (payTo !== '') return decodeHtml(payTo);
+  const start = suppName.indexOf('(');
+  return decodeHtml(start > 0 ? suppName.slice(0, start) : suppName);
+}
+
+function tinParts(gstNo: string): [string, string, string, string] {
+  const parts = gstNo.split('-');
+  const fourth = parts[3] ?? '';
+  return [parts[0] ?? '', parts[1] ?? '', parts[2] ?? '', fourth === '' ? '000' : fourth];
+}
+
+function periodOf(iso: string): { from: Bir2307DateParts; to: Bir2307DateParts; slot: 1 | 2 | 3 } | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) {
+    return null;
+  }
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const parts = { month: match[2], year: match[1].slice(2) };
+  const slot = (((month - 1) % 3) + 1) as 1 | 2 | 3;
+  return {
+    from: { ...parts, day: '1' },
+    to: { ...parts, day: String(lastDay) },
+    slot,
+  };
+}
 
 function isRealDate(value: string): boolean {
   const [year, month, day] = value.split('-').map(Number);
@@ -281,6 +390,130 @@ export class SupplierCvService {
         };
       }),
     };
+  }
+
+  async bir2307(query: unknown): Promise<Bir2307Form> {
+    const input = this.parseBir(query);
+    let schema: string;
+    try {
+      schema = await this.schemaForBranch(input.branch);
+    } catch (error) {
+      if (error instanceof NotFoundException) throw new NotFoundException('BIR 2307 was not found.');
+      throw error;
+    }
+
+    const supplier = rowsOf<{
+      suppName: string | null;
+      payTo: string | null;
+      address: string | null;
+      gstNo: string | null;
+      suppRef: string | null;
+    }>(
+      await this.db.raw(
+        `SELECT
+           supp_name AS suppName,
+           pay_to AS payTo,
+           address,
+           gst_no AS gstNo,
+           supp_ref AS suppRef
+         FROM \`${schema}\`.\`0_suppliers\`
+         WHERE supplier_id = ?
+         LIMIT 1`,
+        [input.supplierId],
+      ),
+    )[0];
+    if (!supplier) throw new NotFoundException('BIR 2307 was not found.');
+
+    const atcRows = rowsOf<{
+      tranDate: string | null;
+      amount: number | string | null;
+      atc: string | null;
+    }>(
+      await this.db.raw(
+        `SELECT
+           DATE_FORMAT(gl.tran_date, '%Y-%m-%d') AS tranDate,
+           gl.amount AS amount,
+           atc.atc AS atc
+         FROM \`${schema}\`.\`0_gl_trans\` gl
+         LEFT JOIN \`${schema}\`.\`0_atc_codes\` atc ON gl.account = atc.account_code
+         WHERE gl.amount <> 0 AND gl.amount < 0
+           AND gl.type = ?
+           AND gl.type_no = ?
+           AND gl.person_id = ?
+           AND gl.account IN (SELECT account_code FROM \`${schema}\`.\`0_atc_codes\`)
+         ORDER BY gl.tran_date`,
+        [input.type, input.transNo, input.supplierId],
+      ),
+    );
+    const incomeRow = rowsOf<{ amount: number | string | null }>(
+      await this.db.raw(
+        `SELECT ABS(SUM(gl.amount)) AS amount
+         FROM \`${schema}\`.\`0_gl_trans\` gl
+         WHERE gl.amount <> 0 AND gl.amount > 0
+           AND gl.type = ?
+           AND gl.type_no = ?
+           AND gl.person_id = ?
+           AND gl.account NOT IN ('1400', '1410', '1410010', '1410011', '1410012', '1410013')`,
+        [input.type, input.transNo, input.supplierId],
+      ),
+    )[0];
+    const referenceRow = rowsOf<{ suppReference: string | null }>(
+      await this.db.raw(
+        `SELECT supp_reference AS suppReference
+         FROM \`${schema}\`.\`0_supp_trans\`
+         WHERE trans_no = ? AND type = ? AND non_trade = 0
+         LIMIT 1`,
+        [input.transNo, input.type],
+      ),
+    )[0];
+
+    const period = periodOf(atcRows[0]?.tranDate ?? '');
+    const reference = (referenceRow?.suppReference ?? '').trim();
+    const lines = atcRows.map((row) => ({
+      atc: (row.atc ?? '').trim(),
+      tax: money(row.amount),
+    }));
+    const tax = Math.round(lines.reduce((sum, line) => sum + line.tax, 0) * 100) / 100;
+
+    return {
+      periodFrom: period?.from ?? blankDate(),
+      periodTo: period?.to ?? blankDate(),
+      quarterSlot: period?.slot ?? null,
+      payeeTin: tinParts(supplier.gstNo ?? ''),
+      payeeName: payeeName(supplier.payTo ?? '', supplier.suppName ?? ''),
+      payeeAddress: decodeHtml(supplier.address ?? ''),
+      payeeZip: PAYEE_ZIP_BY_REFERENCE[(supplier.suppRef ?? '').trim()] ?? '',
+      payorTin: PAYOR.tin,
+      payorName: PAYOR.name,
+      payorAddress: PAYOR.address,
+      payorZip: PAYOR.zip,
+      supplierInvoice: reference ? `SI NO. ${reference}` : '',
+      lines,
+      income: money(incomeRow?.amount),
+      tax,
+      signatory: SIGNATORY.name,
+      signatoryTitle: SIGNATORY.title,
+    };
+  }
+
+  private parseBir(query: unknown): { branch: number; type: 20 | 24; transNo: number; supplierId: number } {
+    const source = query && typeof query === 'object' ? (query as Record<string, unknown>) : {};
+    const branch = Number(source.branch);
+    const type = Number(source.type);
+    const transNo = Number(source.trans_no);
+    const supplierId = Number(source.supplier_id);
+    if (
+      !Number.isInteger(branch) ||
+      branch < 0 ||
+      (type !== 20 && type !== 24) ||
+      !Number.isInteger(transNo) ||
+      transNo <= 0 ||
+      !Number.isInteger(supplierId) ||
+      supplierId <= 0
+    ) {
+      throw new NotFoundException('BIR 2307 was not found.');
+    }
+    return { branch, type, transNo, supplierId };
   }
 
   private parse(body: unknown): SupplierCvSearch {

@@ -34,6 +34,23 @@ export class SupplierCvController {
     }
   }
 
+  @Get('bir2307')
+  @HttpCode(200)
+  async bir2307(@Query() query: Record<string, unknown>) {
+    try {
+      return await this.supplierCvService.bir2307(query);
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error(
+        'Failed to load BIR 2307',
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw new ServiceUnavailableException(
+        'Could not load BIR 2307. Please check the server connection.',
+      );
+    }
+  }
+
   @Get('view')
   @HttpCode(200)
   async view(@Query() query: Record<string, unknown>) {

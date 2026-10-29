@@ -231,7 +231,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ username, onLogout }) => {
         </aside>
 
         <main className="min-w-0 flex-1 overflow-x-clip px-3 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
-          <div className={`mx-auto w-full ${selectedId === 'cv-debit' ? 'max-w-none' : 'max-w-6xl'}`}>
+          <div className={`mx-auto w-full ${selectedId === 'cv-debit' || selectedId === 'po' ? 'max-w-none' : 'max-w-6xl'}`}>
             <p className="font-heading text-[11px] font-bold uppercase tracking-[0.16em] text-[#E53935]">
               Import
             </p>

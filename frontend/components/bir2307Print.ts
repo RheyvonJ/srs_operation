@@ -6,8 +6,10 @@ export interface Bir2307Target {
 }
 
 const BIR_2307_BASE = (
-  process.env.NEXT_PUBLIC_BIR_2307_BASE_URL ?? 'http://192.168.0.89:8002/SUPPLIER_DM_ONLINE'
+  process.env.NEXT_PUBLIC_BIR_2307_BASE_URL ?? ' http://127.0.0.1:3000/purchasing/view/bir-2307'
 ).replace(/\/$/, '');
+
+const FRONTEND_BASE = (process.env.NEXT_PUBLIC_FRONTEND_BASE_URL ?? 'http://127.0.0.1:3000').replace(/\/$/, '');
 
 export function bir2307PrintPath(target: Bir2307Target): string {
   const params = new URLSearchParams({
@@ -16,7 +18,7 @@ export function bir2307PrintPath(target: Bir2307Target): string {
     trans_no: String(target.transNo),
     supplier_id: String(target.supplierId),
   });
-  return `${BIR_2307_BASE}/gl/2307_pdf_per_trans.php?${params.toString()}`;
+  return `${FRONTEND_BASE}/purchasing/view/bir-2307?${params.toString()}`;
 }
 
 export interface RsSlipTarget {
@@ -32,6 +34,40 @@ export function rsSlipPath(target: RsSlipTarget): string {
     name: target.database,
   });
   return `${BIR_2307_BASE}/purchasing/view/view_rs_slip.php?${params.toString()}`;
+}
+
+export interface PurchaseOrderPrintTarget {
+  branch: string;
+  orderNo: string;
+  reference: string;
+  supplierId: string;
+}
+
+export function purchaseOrderPrintPath(target: PurchaseOrderPrintTarget): string {
+  const params = new URLSearchParams({
+    branch: target.branch,
+    order_no: target.orderNo,
+    ref: target.reference,
+    supplier_id: target.supplierId,
+  });
+  return `/purchasing/view/purchase-order?${params.toString()}`;
+}
+
+export function purchaseOrderSignaturePath(file: string): string {
+  return `${BIR_2307_BASE}/signatures/${encodeURIComponent(file)}`;
+}
+
+export interface ConsignmentPrintTarget {
+  database: string;
+  consignmentId: number;
+}
+
+export function consignmentPrintPath(target: ConsignmentPrintTarget): string {
+  const params = new URLSearchParams({
+    branch: target.database,
+    cons_id: String(target.consignmentId),
+  });
+  return `${BIR_2307_BASE}/modules/checkprint/consignment_print_aria.php?${params.toString()}`;
 }
 
 export function cvViewPath(branch: number, cvId: number): string {

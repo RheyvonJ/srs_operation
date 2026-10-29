@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { IdleActivity } from "../components/IdleActivity";
 import "../index.css";
 
 export const viewport: Viewport = {
@@ -15,7 +16,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <IdleActivity />
+        {children}
+      </body>
     </html>
   );
 }
