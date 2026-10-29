@@ -8,6 +8,7 @@ import { BranchesModule } from './branches/branches.module.js';
 import { DatabaseModule } from './database/database.module.js';
 import { SupplierApvModule } from './supplier-apv/supplier-apv.module.js';
 import { SupplierCvModule } from './supplier-cv/supplier-cv.module.js';
+import { SupplierRsModule } from './supplier-rs/supplier-rs.module.js';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { SupplierCvModule } from './supplier-cv/supplier-cv.module.js';
     BranchesModule,
     SupplierCvModule,
     SupplierApvModule,
+    SupplierRsModule,
   ],
   controllers: [AppController, AuthController],
   providers: [AppService, AuthService],

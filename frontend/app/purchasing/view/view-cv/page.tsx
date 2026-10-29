@@ -62,7 +62,7 @@ export default function ViewCheckVoucherPage() {
   }, []);
 
   if (error) {
-    return <p role="alert" style={{ margin: 24, fontFamily: 'Arial, sans-serif', color: '#880000' }}>{error}</p>;
+    return <p role="alert" style={{ margin: 24, fontFamily: 'Arial, sans-serif', color: '#D32F2F' }}>{error}</p>;
   }
   if (!voucher) {
     return <p style={{ margin: 24, fontFamily: 'Arial, sans-serif' }}>Loading check voucher...</p>;
@@ -71,9 +71,9 @@ export default function ViewCheckVoucherPage() {
   const linesTotal = Math.round((voucher.amount + voucher.ewt) * 100) / 100;
 
   return (
-    <main style={{ margin: '24px auto', maxWidth: 920, color: '#111', fontFamily: 'Arial, sans-serif' }}>
+    <main className="cv-page">
       <h1 style={{ margin: '0 0 16px', fontSize: 20, textAlign: 'center' }}>Check Voucher # {voucher.cvNo}</h1>
-      <table style={{ width: '90%', margin: '0 auto 16px', borderCollapse: 'collapse', fontSize: 13 }}>
+      <table className="cv-meta" style={{ width: '100%', margin: '0 auto 16px', borderCollapse: 'collapse', fontSize: 13 }}>
         <tbody>
           <tr>
             <Field label="CV No." value={voucher.cvNo} />
@@ -92,7 +92,8 @@ export default function ViewCheckVoucherPage() {
         </tbody>
       </table>
       <h2 style={{ margin: '8px 0', fontSize: 14 }}>Details</h2>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+      <div className="cv-lines-wrap">
+      <table className="cv-lines" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
         <thead>
           <tr>
             {['Transaction Type', 'Trxn #', 'Date', 'Supplier Invoice', 'Amount'].map((heading) => (
@@ -121,6 +122,7 @@ export default function ViewCheckVoucherPage() {
           <Total label="CV TOTAL :" amount={voucher.amount} />
         </tbody>
       </table>
+      </div>
     </main>
   );
 }

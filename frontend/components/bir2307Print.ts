@@ -19,6 +19,21 @@ export function bir2307PrintPath(target: Bir2307Target): string {
   return `${BIR_2307_BASE}/gl/2307_pdf_per_trans.php?${params.toString()}`;
 }
 
+export interface RsSlipTarget {
+  rsId: string;
+  branch: number;
+  database: string;
+}
+
+export function rsSlipPath(target: RsSlipTarget): string {
+  const params = new URLSearchParams({
+    rs_id: target.rsId,
+    branch: String(target.branch),
+    name: target.database,
+  });
+  return `${BIR_2307_BASE}/purchasing/view/view_rs_slip.php?${params.toString()}`;
+}
+
 export function cvViewPath(branch: number, cvId: number): string {
   const params = new URLSearchParams({
     trans_no: String(cvId),

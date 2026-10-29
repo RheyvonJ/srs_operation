@@ -96,11 +96,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
   return (
     <div className="w-full max-w-[460px] mx-auto">
       {/* Container Card (Deep Navy Blue Header accent with Crisp White body) */}
-      <div className="bg-[#FFFCF8] rounded-2xl shadow-xl shadow-[#0D1B2A]/10 border border-[#E6E0D6] overflow-hidden transition-shadow duration-200 hover:shadow-2xl">
+      <div className="bg-[#FFFFFF] rounded-2xl shadow-xl shadow-[#212121]/10 border border-[#E0E0E0] overflow-hidden transition-shadow duration-200 hover:shadow-2xl">
         
         {/* Card Header Strip: Deep Navy with a retail-red accent */}
-        <div className="relative bg-[#0D1B2A] text-white p-6 sm:p-7 border-b border-[#FFD166]/30">
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#E5383B]" />
+        <div className="relative bg-[#212121] text-white p-6 sm:p-7 border-b border-white/10">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#E53935]" />
 
           {/* Mobile brand header (shown on smaller screens) */}
           <div className="flex items-center gap-3 mb-3 lg:hidden">
@@ -115,7 +115,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
               <div className="font-heading font-extrabold text-base uppercase tracking-tight text-white">
                 San Roque Supermarket
               </div>
-              <div className="text-[11px] font-bold text-[#FFD166] uppercase tracking-wider">
+              <div className="text-[11px] font-bold text-white/70 uppercase tracking-wider">
                 Retail Systems Inc.
               </div>
             </div>
@@ -130,19 +130,19 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
                 Authorized Point-of-Sale & Store Operations Portal
               </p>
             </div>
-            <div className="hidden sm:flex items-center justify-center w-9 h-9 rounded-lg bg-white/10 text-[#FFD166] border border-white/10">
+            <div className="hidden sm:flex items-center justify-center w-9 h-9 rounded-lg bg-white/10 text-white border border-white/10">
               <LockKeyhole className="w-4 h-4" />
             </div>
           </div>
 
         </div>
 
-        {/* Card Body (Crisp White #F8F9FA background with Neutral Dark #212529 text) */}
-        <div className="p-6 sm:p-7 bg-[#F7F4EF]">
+        {/* Card Body (Crisp White #F8F9FA background with Neutral Dark #212121 text) */}
+        <div className="p-6 sm:p-7 bg-[#F4F6F9]">
           {errorMsg && (
             <div 
               role="alert"
-              className="mb-5 p-3 rounded-xl bg-[#FDECEC] border border-[#E5383B]/25 text-xs text-[#E5383B] flex items-start gap-2.5 animate-shake"
+              className="mb-5 p-3 rounded-xl bg-[#FFEBEE] border border-[#E53935]/25 text-xs text-[#E53935] flex items-start gap-2.5 animate-shake"
             >
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <div className="font-medium">{errorMsg}</div>
@@ -156,14 +156,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
               <div className="mb-1.5">
                 <label 
                   htmlFor="staff-username"
-                  className="text-xs font-bold text-[#0D1B2A] uppercase tracking-wider flex items-center gap-1.5 font-heading"
+                  className="text-xs font-bold text-[#212121] uppercase tracking-wider flex items-center gap-1.5 font-heading"
                 >
-                  <User className="w-3.5 h-3.5 text-[#E5383B]" />
+                  <User className="w-3.5 h-3.5 text-[#E53935]" />
                   Username
                 </label>
               </div>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#8A8175]">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#616161]">
                   <User className="w-4 h-4" />
                 </div>
                 <input
@@ -175,7 +175,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
                   value={username}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                   placeholder="Enter your username"
-                  className="w-full pl-10 pr-4 py-2.5 bg-[#FFFCF8] text-[#212529] text-sm rounded-xl border border-[#E0D9CC] focus:outline-none focus:ring-2 focus:ring-[#E5383B] focus:border-transparent transition-all shadow-xs placeholder:text-[#A39888] font-medium"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#FFFFFF] text-[#212121] text-sm rounded-xl border border-[#E0E0E0] focus:outline-none focus:ring-2 focus:ring-[#E53935] focus:border-transparent transition-all shadow-xs placeholder:text-[#9E9E9E] font-medium"
                 />
               </div>
             </div>
@@ -185,14 +185,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
               <div className="mb-1.5">
                 <label 
                   htmlFor="staff-password"
-                  className="text-xs font-bold text-[#0D1B2A] uppercase tracking-wider flex items-center gap-1.5 font-heading"
+                  className="text-xs font-bold text-[#212121] uppercase tracking-wider flex items-center gap-1.5 font-heading"
                 >
-                  <Lock className="w-3.5 h-3.5 text-[#E5383B]" />
+                  <Lock className="w-3.5 h-3.5 text-[#E53935]" />
                   Password
                 </label>
               </div>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#8A8175]">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#616161]">
                   <Lock className="w-4 h-4" />
                 </div>
                 <input
@@ -206,24 +206,24 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
                   onKeyDown={handleKeyDown}
                   onKeyUp={handleKeyDown}
                   placeholder="Enter your system password"
-                  className="w-full pl-10 pr-4 py-2.5 bg-[#FFFCF8] text-[#212529] text-sm rounded-xl border border-[#E0D9CC] focus:outline-none focus:ring-2 focus:ring-[#E5383B] focus:border-transparent transition-all shadow-xs placeholder:text-[#A39888] font-medium"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#FFFFFF] text-[#212121] text-sm rounded-xl border border-[#E0E0E0] focus:outline-none focus:ring-2 focus:ring-[#E53935] focus:border-transparent transition-all shadow-xs placeholder:text-[#9E9E9E] font-medium"
                 />
               </div>
 
               {/* CapsLock Alert Indicator */}
               {capsLockActive && (
-                <div className="mt-1.5 text-[11px] text-[#8A5A12] flex items-center gap-1.5 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-[#FFD166]" />
+                <div className="mt-1.5 text-[11px] text-[#E65100] flex items-center gap-1.5 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-[#ED6C02]" />
                   <span>Caps Lock is ON</span>
                 </div>
               )}
             </div>
 
-            {/* Submit Button (Vibrant Retail Red #E5383B - Mandatory) */}
+            {/* Submit Button (Vibrant Retail Red #E53935 - Mandatory) */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 px-5 rounded-xl bg-[#E5383B] hover:bg-[#c92a2d] active:scale-[0.99] text-white font-heading font-extrabold text-sm uppercase tracking-wider flex items-center justify-center gap-2.5 shadow-lg shadow-[#E5383B]/25 hover:shadow-xl hover:shadow-[#E5383B]/35 disabled:opacity-75 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer"
+              className="w-full py-3.5 px-5 rounded-xl bg-[#E53935] hover:bg-[#C62828] active:scale-[0.99] text-white font-heading font-extrabold text-sm uppercase tracking-wider flex items-center justify-center gap-2.5 shadow-lg shadow-[#E53935]/25 hover:shadow-xl hover:shadow-[#E53935]/35 disabled:opacity-75 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer"
             >
               {isLoading ? (
                 <>
@@ -242,12 +242,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
         </div>
 
         {/* Card Footer Status (Deep Navy Bar) */}
-        <div className="px-6 py-2.5 bg-[#0D1B2A] text-white/55 text-[11px] flex items-center justify-between border-t border-[#FFD166]/25">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#FFD166]" />
+        <div className="flex flex-col gap-1 border-t border-white/10 bg-[#212121] px-4 py-2.5 text-[11px] text-white/55 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <span className="h-2 w-2 shrink-0 rounded-full bg-[#2E7D32]" />
             <span className="text-white/80">San Roque Supermarket Retail Systems Inc.</span>
           </div>
-          <span className="text-[#FFD166]/80 font-mono">Aria 3.10 Login</span>
+          <span className="text-white/70 font-mono">Aria 3.10 Login</span>
         </div>
       </div>
     </div>

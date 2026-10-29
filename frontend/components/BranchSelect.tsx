@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { SearchSelect } from './SearchSelect';
 
 export interface BranchOption {
   id: number;
   code: string;
   name: string;
 }
-
-const selectClassName =
-  'h-9 min-w-36 rounded-xl border border-[#E0D9CC] bg-white px-3 text-sm font-medium text-[#212529] shadow-xs focus:border-[#E5383B] focus:outline-none focus:ring-2 focus:ring-[#E5383B]/20';
 
 const connectionError = 'Could not load the branch list. Please check the server connection.';
 
@@ -96,22 +94,17 @@ export const BranchSelect: React.FC<BranchSelectProps> = ({
   const { branches, loading, error } = useBranches();
 
   return (
-    <select
+    <SearchSelect
       id={id}
       name="branch"
-      defaultValue={emptyValue}
-      disabled={loading}
-      aria-busy={loading}
-      aria-invalid={error ? true : undefined}
-      className={selectClassName}
-    >
-      <option value={emptyValue}>{loading ? 'Loading branches...' : emptyLabel}</option>
-      {branches.map((branch) => (
-        <option key={branch.id} value={branch.code}>
-          {branch.name}
-        </option>
-      ))}
-    </select>
+      options={branches.map((branch) => ({ value: branch.code, label: branch.name }))}
+      emptyValue={emptyValue}
+      emptyLabel={emptyLabel}
+      placeholder="Search branch"
+      loading={loading}
+      loadingLabel="Loading branches..."
+      invalid={Boolean(error)}
+    />
   );
 };
 
@@ -122,7 +115,7 @@ export const BranchLoadError: React.FC = () => {
   return (
     <p
       role="alert"
-      className="mx-auto mt-3 max-w-xl rounded-xl border border-[#E5383B]/25 bg-[#FDECEC] px-4 py-3 text-center text-xs font-medium text-[#E5383B]"
+      className="mx-auto mt-3 max-w-xl rounded-xl border border-[#E53935]/25 bg-[#FFEBEE] px-4 py-3 text-center text-xs font-medium text-[#E53935]"
     >
       {error}
     </p>
