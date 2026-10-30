@@ -67,4 +67,16 @@ export class SupplierCvController {
       );
     }
   }
+
+  @Get('transaction-view')
+  @HttpCode(200)
+  async transactionView(@Query() query: Record<string, unknown>) {
+    try {
+      return await this.supplierCvService.viewSupplierTransaction(query);
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error('Failed to load the supplier transaction', error instanceof Error ? error.stack : undefined);
+      throw new ServiceUnavailableException('Could not load the supplier transaction. Please check the server connection.');
+    }
+  }
 }

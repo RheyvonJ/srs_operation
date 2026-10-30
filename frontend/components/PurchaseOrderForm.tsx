@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { BranchLoadError, BranchSelect } from './BranchSelect';
+import { DatePicker } from './DatePicker';
 import { purchaseOrderPrintPath, type PurchaseOrderPrintTarget } from './bir2307Print';
 
 interface PurchaseOrderLine {
@@ -53,6 +54,7 @@ export const PurchaseOrderForm: React.FC = () => {
   const now = new Date();
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [groups, setGroups] = useState<PurchaseOrderGroup[]>([]);
   const [grandTotal, setGrandTotal] = useState(0);
@@ -62,6 +64,7 @@ export const PurchaseOrderForm: React.FC = () => {
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://127.0.0.1:3001';
     setLoading(true);
     setError(null);
+    setSearched(false);
     setGroups([]);
     setGrandTotal(0);
     try {
@@ -83,6 +86,7 @@ export const PurchaseOrderForm: React.FC = () => {
         return;
       }
       setGroups(body.groups);
+      setSearched(true);
       setGrandTotal(typeof body.grandTotal === 'number' ? body.grandTotal : 0);
     } catch {
       setError(connectionError);
@@ -92,60 +96,54 @@ export const PurchaseOrderForm: React.FC = () => {
   };
 
   return (
-    <section className="mt-6 overflow-hidden rounded-2xl border border-[#E0E0E0] bg-[#FFFFFF] shadow-sm">
+    <section className="mt-6 overflow-hidden rounded-2xl border border-[#E0E0E0] bg-[#FFFFFF] px-3 py-6 shadow-sm sm:px-6">
       <form
-        className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8"
+        className="mx-auto w-full max-w-6xl"
         onSubmit={(event) => {
           event.preventDefault();
           void search(event.currentTarget);
         }}
       >
-        <div className="grid grid-cols-1 gap-3 text-xs font-semibold text-[#212121] sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 text-xs font-semibold text-[#212121] sm:grid-cols-2 xl:grid-cols-3">
           <div className="grid min-w-0 gap-1">
             <label htmlFor="po-branch">Branch</label>
             <BranchSelect id="po-branch" emptyValue="all" emptyLabel="All Branches" />
           </div>
           <div className="grid min-w-0 gap-1">
             <label htmlFor="po-from">From</label>
-            <input id="po-from" name="from" type="date" defaultValue={today} className={fieldClassName} />
+            <DatePicker id="po-from" name="from" defaultValue={today} />
           </div>
           <div className="grid min-w-0 gap-1">
             <label htmlFor="po-to">To</label>
-            <input id="po-to" name="to" type="date" defaultValue={today} className={fieldClassName} />
+            <DatePicker id="po-to" name="to" defaultValue={today} />
+          </div>
+          <div className="grid min-w-0 gap-1">
+            <label htmlFor="po-supplier-tin">Supplier TIN #</label>
+            <input id="po-supplier-tin" name="supplierTin" type="text" className={fieldClassName} />
+          </div>
+          <div className="flex items-end">
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#E53935] px-4 py-2 text-xs font-heading font-extrabold uppercase tracking-wider text-white shadow-sm transition-colors hover:bg-[#C62828] focus:outline-none focus:ring-2 focus:ring-[#E53935]/30 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-75 sm:min-h-9"
+            >
+              <Search className="h-3.5 w-3.5" />
+              {loading ? 'Loading...' : 'Search'}
+            </button>
           </div>
         </div>
         <BranchLoadError />
-
-        <div className="mx-auto mt-6 grid max-w-md grid-cols-1 gap-3 text-xs font-semibold text-[#212121] sm:grid-cols-[max-content_minmax(0,1fr)] sm:items-center sm:gap-x-3">
-          <label htmlFor="po-supplier-tin" className="sm:text-right">Supplier TIN #</label>
-          <input id="po-supplier-tin" name="supplierTin" type="text" className={fieldClassName} />
-        </div>
-
-        <div className="mt-4 flex justify-center">
-          <button
-            type="submit"
-            disabled={loading}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#E53935] px-5 py-2 text-xs font-heading font-extrabold uppercase tracking-wider text-white shadow-sm transition-colors hover:bg-[#C62828] focus:outline-none focus:ring-2 focus:ring-[#E53935]/30 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-75 sm:w-auto"
-          >
-            <CheckCircle2 className="h-4 w-4 text-white" />
-            {loading ? 'Loading...' : 'Display Purchase Order'}
-          </button>
-        </div>
       </form>
 
       {error && (
-        <p role="alert" className="mx-auto mb-6 max-w-xl rounded-xl border border-[#E53935]/25 bg-[#FFEBEE] px-4 py-3 text-center text-xs font-medium text-[#E53935]">
+        <p role="alert" className="mx-auto mt-6 max-w-xl rounded-xl border border-[#E53935]/25 bg-[#FFEBEE] px-4 py-3 text-center text-xs font-medium text-[#E53935]">
           {error}
         </p>
       )}
 
-      {groups.length > 0 && (
-        <div className="border-t border-[#E0E0E0] px-3 py-6 sm:px-6">
-          <h3 className="font-heading text-sm font-extrabold uppercase tracking-wide text-[#212121]">
-            Purchase Order List
-          </h3>
-          <div className="mt-4 overflow-x-auto">
-            <table className="stack-table w-full border-collapse text-xs lg:min-w-[960px] lg:table">
+      {searched && !error && (
+        <div className="mt-6 overflow-x-auto">
+          <table className="stack-table w-full border-collapse text-xs lg:table">
               <thead className="bg-[#212121] text-white">
                 <tr>
                   <th className="border border-white/15 px-3 py-3 text-right">#</th>
@@ -163,6 +161,13 @@ export const PurchaseOrderForm: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
+                {groups.length === 0 && (
+                  <tr>
+                    <td colSpan={12} className="border border-[#E0E0E0] px-3 py-4 text-center text-sm font-semibold text-[#616161]">
+                      No transactions found
+                    </td>
+                  </tr>
+                )}
                 {groups.map((group) => (
                   <React.Fragment key={`${group.supplierId}-${group.rows[0]?.line ?? group.supplierName}`}>
                     {group.rows.map((row) => (
@@ -192,7 +197,7 @@ export const PurchaseOrderForm: React.FC = () => {
                         </td>
                       </tr>
                     ))}
-                    <tr className="bg-[#F4F6F9] font-semibold text-[#212121]">
+                    <tr className="bg-[#F4F6F9] font-semibold text-[#880000]">
                       <td data-label="" className="border border-[#E0E0E0] px-3 py-3" />
                       <td data-label="" className="border border-[#E0E0E0] px-3 py-3" />
                       <td data-label="" className="border border-[#E0E0E0] px-3 py-3" />
@@ -208,7 +213,7 @@ export const PurchaseOrderForm: React.FC = () => {
                     </tr>
                   </React.Fragment>
                 ))}
-                <tr className="bg-[#FFEBEE] font-heading font-extrabold text-[#212121]">
+                <tr className="bg-[#F4F6F9] font-semibold text-[#880000]">
                   <td data-label="" className="border border-[#E0E0E0] px-3 py-3" />
                   <td data-label="" className="border border-[#E0E0E0] px-3 py-3" />
                   <td data-label="" className="border border-[#E0E0E0] px-3 py-3" />
@@ -224,7 +229,6 @@ export const PurchaseOrderForm: React.FC = () => {
                 </tr>
               </tbody>
             </table>
-          </div>
         </div>
       )}
     </section>

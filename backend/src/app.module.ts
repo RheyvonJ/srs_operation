@@ -11,6 +11,8 @@ import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module.j
 import { SupplierApvModule } from './supplier-apv/supplier-apv.module.js';
 import { SupplierCvModule } from './supplier-cv/supplier-cv.module.js';
 import { SupplierRsModule } from './supplier-rs/supplier-rs.module.js';
+import { CheckprintModule } from './checkprint/checkprint.module.js';
+import { FinancialViewsModule } from './financial-views/financial-views.module.js';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { SupplierRsModule } from './supplier-rs/supplier-rs.module.js';
     SupplierRsModule,
     PurchaseOrdersModule,
     ConsignmentSalesModule,
+    CheckprintModule,
+    FinancialViewsModule,
   ],
   controllers: [AppController, AuthController],
   providers: [AppService, AuthService],

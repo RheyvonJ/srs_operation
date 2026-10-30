@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import {
+  Box,
   ChevronDown,
   ClipboardList,
   FileText,
@@ -9,6 +11,7 @@ import {
   Menu,
   Package,
   Receipt,
+  RotateCcw,
   ShoppingCart,
   X,
 } from 'lucide-react';
@@ -59,6 +62,61 @@ const folderItems = [
 type FolderItem = (typeof folderItems)[number];
 type FolderItemId = FolderItem['id'];
 
+const recordGroups = [
+  { id: 'payables', label: 'Payables and returns' },
+  { id: 'orders', label: 'Orders and sales' },
+] as const;
+
+const recordCards: {
+  id: FolderItemId;
+  group: (typeof recordGroups)[number]['id'];
+  title: string;
+  detail: string;
+  code: string;
+  icon: typeof FileText;
+}[] = [
+  {
+    id: 'cv-debit',
+    group: 'payables',
+    title: 'Supplier CV and debit memo',
+    detail: 'Credit vouchers and debit memos',
+    code: 'CV',
+    icon: FileText,
+  },
+  {
+    id: 'apv',
+    group: 'payables',
+    title: 'Supplier APV',
+    detail: 'Accounts payable vouchers',
+    code: 'APV',
+    icon: ClipboardList,
+  },
+  {
+    id: 'rs',
+    group: 'payables',
+    title: 'Supplier RS',
+    detail: 'Receiving slips returned to the supplier',
+    code: 'RS',
+    icon: RotateCcw,
+  },
+  {
+    id: 'po',
+    group: 'orders',
+    title: 'Purchase order',
+    detail: 'Supplier purchase orders',
+    code: 'PO',
+    icon: ShoppingCart,
+  },
+  {
+    id: 'consignment',
+    group: 'orders',
+    title: 'Consignment sales',
+    detail: 'Monthly consignment sales by supplier',
+    code: 'CS',
+    icon: Box,
+  },
+];
+
 const ItemPanel: React.FC<{ item: FolderItem }> = ({ item }) => {
   if (item.id === 'cv-debit') {
     return <SupplierCvDebitForm />;
@@ -104,6 +162,125 @@ export const Dashboard: React.FC<DashboardProps> = ({ username, onLogout }) => {
     setNavOpen(false);
   };
 
+  if (!selected) {
+    return (
+      <div className="flex min-h-dvh flex-col bg-[#F4F6F9] text-[#212121] font-body selection:bg-[#E53935] selection:text-white">
+        <header className="shrink-0 bg-[#212121] text-white border-b border-white/10 px-4 sm:px-6 lg:px-8 py-2.5">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2.5">
+              <span className="inline-flex shrink-0 overflow-hidden rounded-2xl bg-white p-1">
+                <Image
+                  src="/srs-logo.png"
+                  alt="San Roque Supermarket"
+                  width={270}
+                  height={212}
+                  className="h-8 w-auto object-contain"
+                />
+              </span>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="font-heading font-extrabold text-sm uppercase tracking-tight text-white leading-tight">
+                  San Roque Supermarket
+                </span>
+                <span className="hidden sm:inline text-white/30">|</span>
+                <span className="text-[11px] font-medium text-white/70 whitespace-nowrap">
+                  Retail Systems Inc.
+                </span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="w-full flex-1 px-4 py-5 sm:px-6 lg:px-8">
+          <div className="mx-auto w-full max-w-[94rem]">
+          <div className="flex shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <h1 className="font-heading text-[1.75rem] font-bold tracking-tight text-[#1A1D21] sm:text-[2rem]">
+                Supplier and transactions
+              </h1>
+              <p className="mt-1 text-sm text-[#8B919A]">
+                Choose a record type to view company data.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onLogout}
+              className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl border border-[#E4E7EC] bg-white px-4 py-2.5 text-sm font-medium text-[#3A3F47] shadow-sm transition-colors hover:border-[#E53935] hover:text-[#E53935]"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </button>
+          </div>
+
+          <div className="mt-6 flex flex-col gap-8">
+          {recordGroups.map((group) => (
+            <section key={group.id}>
+              <div className="mb-3 flex items-center gap-4">
+                <h2 className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9AA1AB]">
+                  {group.label}
+                </h2>
+                <span className="h-px flex-1 bg-[#E6E8EC]" />
+              </div>
+              <div className="flex flex-wrap justify-center gap-4">
+                {recordCards
+                  .filter((card) => card.group === group.id)
+                  .map((card) => {
+                    const Icon = card.icon;
+                    return (
+                      <button
+                        key={card.id}
+                        type="button"
+                        onClick={() => openItem(card.id)}
+                        className="flex w-[min(100%,30rem)] flex-col rounded-2xl border border-[#E8EAEE] bg-white p-6 text-left shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-shadow hover:shadow-md"
+                      >
+                        <span className="flex items-start justify-between gap-3">
+                          <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#FDECEC] text-[#C96B6B]">
+                            <Icon className="h-5 w-5" strokeWidth={1.75} />
+                          </span>
+                          <span className="rounded-full bg-[#FDECEC] px-2.5 py-1 text-[11px] font-semibold tracking-wide text-[#C96B6B]">
+                            {card.code}
+                          </span>
+                        </span>
+                        <span className="mt-4 block">
+                          <span className="block text-[15px] font-semibold text-[#1C1E21]">
+                            {card.title}
+                          </span>
+                          <span className="mt-1 block text-sm leading-relaxed text-[#8B919A]">
+                            {card.detail}
+                          </span>
+                        </span>
+                        <span className="mt-4 block border-t border-[#ECEEF1] pt-3 text-sm text-[#5C6570]">
+                          Open →
+                        </span>
+                      </button>
+                    );
+                  })}
+              </div>
+            </section>
+          ))}
+          </div>
+          </div>
+        </main>
+
+        <footer className="shrink-0 bg-[#212121] text-white/55 text-xs border-t border-white/10 py-4 px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+            <div className="max-w-full">
+              <span className="font-semibold text-white/80">San Roque Supermarket Retail Systems Inc.</span>
+              <span className="mx-2 text-[#E53935]">·</span>
+              <span>Enterprise Point-of-Sale & Store Operations Portal</span>
+            </div>
+            <div className="flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-white/50 sm:justify-end">
+              <span>Security ID: SRS-POS-SEC-v4</span>
+              <span aria-hidden="true">·</span>
+              <span>Encrypted BIR Terminal Relay</span>
+              <span aria-hidden="true">·</span>
+              <span>© 2026 SRS Inc.</span>
+            </div>
+          </div>
+        </footer>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F4F6F9] text-[#212121] flex flex-col font-body selection:bg-[#E53935] selection:text-white">
       <header className="relative z-20 bg-[#212121] text-white border-b border-white/10">
@@ -119,9 +296,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ username, onLogout }) => {
           </button>
 
           <span className="inline-flex shrink-0 overflow-hidden rounded-2xl bg-white p-1">
-            <img
+            <Image
               src="/srs-logo.png"
               alt="San Roque Supermarket"
+              width={270}
+              height={212}
               className="h-8 sm:h-9 w-auto object-contain"
             />
           </span>
@@ -231,61 +410,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ username, onLogout }) => {
         </aside>
 
         <main className="min-w-0 flex-1 overflow-x-clip px-3 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
-          <div className={`mx-auto w-full ${selectedId === 'cv-debit' || selectedId === 'po' ? 'max-w-none' : 'max-w-6xl'}`}>
+          <div className="mx-auto w-full max-w-6xl">
             <p className="font-heading text-[11px] font-bold uppercase tracking-[0.16em] text-[#E53935]">
               Import
             </p>
             <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div className="min-w-0">
                 <h2 className="font-heading text-xl font-extrabold tracking-tight text-[#212121] sm:text-2xl lg:text-3xl">
-                  {selected
-                    ? selected.id === 'rs' ? 'Return to Supplier Inquiry' : selected.name
-                    : 'Supplier & Transactions'}
+                  {selected.id === 'rs' ? 'Return to Supplier Inquiry' : selected.name}
                 </h2>
                 <p className="mt-1 text-sm text-[#616161]">
-                  {selected
-                    ? selected.detail
-                    : 'Folder for supplier documents and store transactions.'}
+                  {selected.detail}
                 </p>
               </div>
-              {selected && (
-                <button
-                  type="button"
-                  onClick={() => setSelectedId(null)}
-                  className="self-start rounded-xl border border-[#E0E0E0] bg-[#FFFFFF] px-3 py-2 text-xs font-heading font-bold uppercase tracking-wider text-[#212121] hover:border-[#212121]"
-                >
-                  Back to folder
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setSelectedId(null)}
+                className="self-start rounded-xl border border-[#E0E0E0] bg-[#FFFFFF] px-3 py-2 text-xs font-heading font-bold uppercase tracking-wider text-[#212121] hover:border-[#212121]"
+              >
+                Back to folder
+              </button>
             </div>
 
-            {selected ? (
-              <ItemPanel item={selected} />
-            ) : (
-              <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {folderItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => openItem(item.id)}
-                      className="rounded-2xl border border-[#E0E0E0] bg-[#FFFFFF] p-4 text-left shadow-sm transition-all hover:border-[#E53935] hover:shadow-md"
-                    >
-                      <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#FFEBEE] text-[#E53935]">
-                        <Icon className="h-5 w-5" />
-                      </span>
-                      <span className="mt-4 block font-heading text-base font-bold text-[#212121]">
-                        {item.name}
-                      </span>
-                      <span className="mt-1 block text-sm text-[#616161]">
-                        {item.detail}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+            <ItemPanel item={selected} />
           </div>
         </main>
       </div>

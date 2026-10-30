@@ -3,10 +3,26 @@ import Image from 'next/image';
 import { ShoppingCart, ShieldCheck, Store, Sparkles, Building2, MapPin, Users, Layers, Briefcase } from 'lucide-react';
 
 const recordHighlights = [
-  { title: 'Branches Covered', icon: MapPin },
-  { title: 'Supplier Records', icon: Users },
-  { title: 'Data Categories', icon: Layers },
-  { title: 'Business Records', icon: Briefcase },
+  {
+    title: 'Branches Covered',
+    detail: 'Branch information included in the system',
+    icon: MapPin,
+  },
+  {
+    title: 'Supplier Records',
+    detail: 'Registered supplier information',
+    icon: Users,
+  },
+  {
+    title: 'Data Categories',
+    detail: 'Types of company records available',
+    icon: Layers,
+  },
+  {
+    title: 'Business Records',
+    detail: 'Company information stored in the system',
+    icon: Briefcase,
+  },
 ] as const;
 
 export const BrandHero: React.FC = () => {
@@ -74,15 +90,18 @@ export const BrandHero: React.FC = () => {
           branch information, TIN numbers, CV records, and other essential business data.
         </p>
 
-        <div className="grid grid-cols-2 gap-3 rounded-xl border border-white/10 bg-[#212121]/85 p-4 backdrop-blur-md">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-4 rounded-xl border border-white/10 bg-[#212121]/85 p-4 backdrop-blur-md">
           {recordHighlights.map((item) => {
             const Icon = item.icon;
             return (
-              <div key={item.title} className="flex items-center gap-2.5">
+              <div key={item.title} className="flex items-start gap-2.5">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E53935]/15 text-[#E53935]">
                   <Icon className="h-4 w-4" />
                 </div>
-                <div className="font-heading text-[13px] font-bold leading-tight text-white">{item.title}</div>
+                <div className="min-w-0">
+                  <div className="font-heading text-sm font-bold leading-tight text-white">{item.title}</div>
+                  <div className="mt-1 text-[11px] font-medium leading-snug text-white/65">{item.detail}</div>
+                </div>
               </div>
             );
           })}

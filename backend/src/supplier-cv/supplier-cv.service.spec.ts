@@ -26,10 +26,14 @@ function createDb(responses: Array<{ includes: string; rows: unknown[] }>) {
   return { db: db as unknown as Knex, calls };
 }
 
+function createService(db: Knex) {
+  return new SupplierCvService(db, {} as never, {} as never, {} as never);
+}
+
 describe('SupplierCvService', () => {
   it('requires a supplier TIN before querying', async () => {
     const { db, calls } = createDb([]);
-    const service = new SupplierCvService(db);
+    const service = createService(db);
 
     await expect(service.search({ ...search, tin: '  ' })).rejects.toThrow(
       'Please Input Your TIN#.',
@@ -39,7 +43,7 @@ describe('SupplierCvService', () => {
 
   it('requires a branch code', async () => {
     const { db } = createDb([]);
-    const service = new SupplierCvService(db);
+    const service = createService(db);
 
     await expect(service.search({ ...search, branchCode: '' })).rejects.toThrow(
       'Please select a branch.',
@@ -48,7 +52,7 @@ describe('SupplierCvService', () => {
 
   it('rejects a branch that has no accounting database', async () => {
     const { db, calls } = createDb([{ includes: '0_branches', rows: [{ ariaDb: 'not a db' }] }]);
-    const service = new SupplierCvService(db);
+    const service = createService(db);
 
     await expect(service.search(search)).rejects.toThrow('Selected branch is not available.');
     expect(calls).toHaveLength(1);
@@ -59,7 +63,7 @@ describe('SupplierCvService', () => {
       { includes: '0_branches', rows: [{ ariaDb: 'srs_aria_nova' }] },
       { includes: 'gst_no', rows: [] },
     ]);
-    const service = new SupplierCvService(db);
+    const service = createService(db);
 
     await expect(service.search(search)).rejects.toBeInstanceOf(BadRequestException);
     await expect(service.search(search)).rejects.toThrow('Supplier Not Found.');
@@ -71,7 +75,7 @@ describe('SupplierCvService', () => {
       { includes: 'gst_no', rows: [{ supplierId: 15 }] },
       { includes: '0_cv_header', rows: [] },
     ]);
-    const service = new SupplierCvService(db);
+    const service = createService(db);
 
     await expect(service.search(search)).rejects.toThrow('Selected Supplier has no CV.');
   });
@@ -101,7 +105,7 @@ describe('SupplierCvService', () => {
       },
       { includes: 'type = 24', rows: [{ poNumber: 'PO-1', transNo: 900 }] },
     ]);
-    const service = new SupplierCvService(db);
+    const service = createService(db);
 
     await expect(service.search({ ...search, cvNumber: '1634' })).resolves.toEqual({
       rows: [
@@ -189,7 +193,7 @@ describe('viewCheckVoucher', () => {
       },
       { includes: '0_comments', rows: [{ memo: 'Administrator' }] },
     ]);
-    const service = new SupplierCvService(db);
+    const service = createService(db);
 
     await expect(service.viewCheckVoucher({ branch: '4', trans_no: '158060' })).resolves.toEqual({
       cvNo: '1634354',
@@ -200,8 +204,10 @@ describe('viewCheckVoucher', () => {
       comments: ['Administrator'],
       lines: [
         {
-          transType: 'Supplier Invoice',
+          transType: 'AP Voucher',
           transactionNumber: '200197',
+          transNo: 158335,
+          transTypeId: 20,
           date: '2026-10-09',
           supplierInvoice: 'Supp Inv. # 45281',
           amount: 6888.83,
@@ -209,6 +215,8 @@ describe('viewCheckVoucher', () => {
         {
           transType: 'Supplier Debit Memo',
           transactionNumber: '227005',
+          transNo: 229582,
+          transTypeId: 53,
           date: '2026-10-07',
           supplierInvoice: 'Supp Inv. # RS#214868',
           amount: -1503.68,
@@ -216,6 +224,8 @@ describe('viewCheckVoucher', () => {
         {
           transType: 'Supplier Payment',
           transactionNumber: '900',
+          transNo: 900,
+          transTypeId: 22,
           date: '2026-10-09',
           supplierInvoice: '',
           amount: 100,
@@ -234,7 +244,7 @@ describe('bir2307', () => {
 
   it('rejects a print request that is missing its transaction', async () => {
     const { db, calls } = createDb([]);
-    const service = new SupplierCvService(db);
+    const service = createService(db);
 
     await expect(service.bir2307({ ...query, trans_no: '0' })).rejects.toThrow('BIR 2307 was not found.');
     expect(calls).toHaveLength(0);
@@ -265,7 +275,7 @@ describe('bir2307', () => {
       { includes: '1410013', rows: [{ amount: 1000 }] },
       { includes: 'non_trade', rows: [{ suppReference: '45281' }] },
     ]);
-    const service = new SupplierCvService(db);
+    const service = createService(db);
 
     await expect(service.bir2307(query)).resolves.toMatchObject({
       periodFrom: { month: '02', day: '1', year: '24' },
@@ -308,7 +318,7 @@ describe('bir2307', () => {
       { includes: '1410013', rows: [{ amount: null }] },
       { includes: 'non_trade', rows: [{ suppReference: '' }] },
     ]);
-    const service = new SupplierCvService(db);
+    const service = createService(db);
 
     await expect(service.bir2307(query)).resolves.toMatchObject({
       periodFrom: { month: '10', day: '1', year: '26' },
@@ -328,7 +338,7 @@ describe('bir2307', () => {
       { includes: '0_branches', rows: [{ id: 4, configDbKey: 4, ariaDb: 'srs_aria_nova' }] },
       { includes: 'pay_to', rows: [] },
     ]);
-    const service = new SupplierCvService(db);
+    const service = createService(db);
 
     await expect(service.bir2307(query)).rejects.toBeInstanceOf(NotFoundException);
   });
@@ -355,3 +365,4 @@ describe('SupplierCvController', () => {
     await expect(controller.bir2307({ branch: '4' })).rejects.toBeInstanceOf(ServiceUnavailableException);
   });
 });
+

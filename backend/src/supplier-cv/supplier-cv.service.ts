@@ -1,6 +1,19 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { Knex } from 'knex';
 import { KNEX } from '../database/database.module.js';
+import { SupplierApVoucherService } from './supplier-ap-voucher.service.js';
+import { SupplierDebitMemoViewService } from './supplier-debit-memo-view.service.js';
+import { SupplierPaymentViewService } from './supplier-payment-view.service.js';
+import {
+  rowsOf,
+  signedMoney,
+  SUPPLIER_DEBIT_MEMO,
+  SUPPLIER_INVOICE,
+  SUPPLIER_PAYMENT,
+  SUPPLIER_TRANSACTION_TYPES,
+  TRANS_TYPE_NAMES,
+  type SupplierTransaction,
+} from './supplier-transaction.types.js';
 
 export interface Bir2307Target {
   branch: number;
@@ -28,6 +41,8 @@ export interface SupplierCvLine {
 export interface CheckVoucherLine {
   transType: string;
   transactionNumber: string;
+  transNo: number | null;
+  transTypeId: number;
   date: string;
   supplierInvoice: string;
   amount: number;
@@ -119,21 +134,10 @@ function printBranchNumber(configDbKey: unknown, id: unknown): number | null {
   return Number.isInteger(branchId) && branchId >= 0 ? branchId : null;
 }
 
-function rowsOf<T>(result: unknown): T[] {
-  if (Array.isArray(result) && Array.isArray(result[0])) return result[0] as T[];
-  return [];
-}
-
 function money(value: unknown): number {
   const amount = Number(value);
   if (!Number.isFinite(amount)) return 0;
   return Math.round(Math.abs(amount) * 100) / 100;
-}
-
-function signedMoney(value: unknown): number {
-  const amount = Number(value);
-  if (!Number.isFinite(amount)) return 0;
-  return Math.round(amount * 100) / 100;
 }
 
 const PAYEE_ZIP_BY_REFERENCE: Record<string, string> = {
@@ -161,28 +165,7 @@ const SIGNATORY = {
   title: 'Accounting Head / 199-683-987',
 };
 
-const SUPPLIER_PAYMENT = 22;
 const CV_COMMENT_TYPE = 99;
-const TRANS_TYPE_NAMES: Record<number, string> = {
-  0: 'Journal Entry',
-  1: 'Bank Payment',
-  2: 'Bank Deposit',
-  4: 'Funds Transfer',
-  10: 'Sales Invoice',
-  11: 'Customer Credit Note',
-  12: 'Customer Payment',
-  13: 'Delivery',
-  16: 'Location Transfer',
-  17: 'Inventory Adjustment',
-  18: 'Purchase Order',
-  20: 'Supplier Invoice',
-  21: 'Supplier Credit Note',
-  22: 'Supplier Payment',
-  24: 'Cash Withholding',
-  25: 'Purchase Order Delivery',
-  53: 'Supplier Debit Memo',
-  54: 'Supplier Credit Memo',
-};
 
 function blankDate(): Bir2307DateParts {
   return { month: '', day: '', year: '' };
@@ -249,7 +232,12 @@ function isRealDate(value: string): boolean {
 
 @Injectable()
 export class SupplierCvService {
-  constructor(@Inject(KNEX) private readonly db: Knex) {}
+  constructor(
+    @Inject(KNEX) private readonly db: Knex,
+    private readonly apVoucherView: SupplierApVoucherService,
+    private readonly supplierPaymentView: SupplierPaymentViewService,
+    private readonly debitMemoView: SupplierDebitMemoViewService,
+  ) {}
 
   async search(body: unknown): Promise<SupplierCvResult> {
     const input = this.parse(body);
@@ -302,6 +290,14 @@ export class SupplierCvService {
     });
     const total = Math.round(rows.reduce((sum, row) => sum + row.amount, 0) * 100) / 100;
     return { rows, total };
+  }
+
+  async viewSupplierTransaction(query: unknown): Promise<SupplierTransaction> {
+    const input = this.parseSupplierTransaction(query);
+    const schema = await this.schemaForBranch(input.branch, 'Supplier transaction branch was not found.');
+    if (input.type === SUPPLIER_PAYMENT) return this.supplierPaymentView.view(schema, input.transNo);
+    if (input.type === SUPPLIER_DEBIT_MEMO) return this.debitMemoView.view(schema, input.transNo);
+    return this.apVoucherView.view(schema, input.transNo);
   }
 
   async viewCheckVoucher(query: unknown): Promise<CheckVoucher> {
@@ -382,8 +378,10 @@ export class SupplierCvService {
         const reference = (row.reference ?? '').trim();
         const supplierInvoice = (row.suppReference ?? '').trim();
         return {
-          transType: TRANS_TYPE_NAMES[transType] ?? `Type ${transType}`,
+          transType: transType === SUPPLIER_INVOICE ? 'AP Voucher' : TRANS_TYPE_NAMES[transType] ?? `Type ${transType}`,
           transactionNumber: transType === SUPPLIER_PAYMENT || !reference ? String(transNo) : reference,
+          transNo: SUPPLIER_TRANSACTION_TYPES.includes(transType) ? transNo : null,
+          transTypeId: transType,
           date: row.tranDate ?? '',
           supplierInvoice: supplierInvoice ? `Supp Inv. # ${supplierInvoice}` : '',
           amount: signedMoney(signedMoney(row.amount) + signedMoney(row.ewt)),
@@ -588,7 +586,19 @@ export class SupplierCvService {
     return { branch, transNo };
   }
 
-  private async schemaForBranch(branch: number): Promise<string> {
+  private parseSupplierTransaction(query: unknown): { branch: number; transNo: number; type: number } {
+    const source = query && typeof query === 'object' ? (query as Record<string, unknown>) : {};
+    const branch = Number(source.branch);
+    const transNo = Number(source.trans_no);
+    const type = source.type === undefined ? SUPPLIER_INVOICE : Number(source.type);
+    if (!Number.isInteger(branch) || branch < 0 || !Number.isInteger(transNo) || transNo <= 0)
+      throw new BadRequestException('A valid branch and transaction number are required.');
+    if (!SUPPLIER_TRANSACTION_TYPES.includes(type))
+      throw new BadRequestException('Unsupported supplier transaction type.');
+    return { branch, transNo, type };
+  }
+
+  private async schemaForBranch(branch: number, notFoundMessage = 'This page must be called with a CV number to review.'): Promise<string> {
     const result = await this.db.raw(
       `SELECT id, config_db_key AS configDbKey, aria_db AS ariaDb
        FROM transfers.\`0_branches\`
@@ -601,7 +611,7 @@ export class SupplierCvService {
     const chosen = byConnection.length === 1 ? byConnection[0] : byId.length === 1 ? byId[0] : undefined;
     const schema = chosen?.ariaDb?.trim() ?? '';
     if (!IDENTIFIER.test(schema)) {
-      throw new NotFoundException('This page must be called with a CV number to review.');
+      throw new NotFoundException(notFoundMessage);
     }
     return schema;
   }

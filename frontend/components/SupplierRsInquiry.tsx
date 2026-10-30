@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
 import { BranchLoadError, BranchSelect } from './BranchSelect';
+import { DatePicker } from './DatePicker';
 import { SearchSelect } from './SearchSelect';
 import { rsSlipPath, type RsSlipTarget } from './bir2307Print';
 
@@ -42,6 +43,7 @@ export const SupplierRsInquiry: React.FC = () => {
   const [suppliers, setSuppliers] = useState<SupplierOption[]>([]);
   const [suppliersReady, setSuppliersReady] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rows, setRows] = useState<SupplierRsLine[]>([]);
 
@@ -77,6 +79,7 @@ export const SupplierRsInquiry: React.FC = () => {
     const supplierCode = String(data.get('supplier') ?? '');
     setLoading(true);
     setError(null);
+    setSearched(false);
     setRows([]);
     try {
       const response = await fetch(`${apiBaseUrl}/supplier-rs/search`, {
@@ -98,6 +101,7 @@ export const SupplierRsInquiry: React.FC = () => {
         return;
       }
       setRows(body.rows);
+      setSearched(true);
     } catch {
       setError(connectionError);
     } finally {
@@ -138,11 +142,11 @@ export const SupplierRsInquiry: React.FC = () => {
           </div>
           <div className="grid min-w-0 gap-1">
             <label htmlFor="rs-from">Date From</label>
-            <input id="rs-from" name="from" type="date" defaultValue={yearStart} className={fieldClassName} />
+            <DatePicker id="rs-from" name="from" defaultValue={yearStart} />
           </div>
           <div className="grid min-w-0 gap-1">
             <label htmlFor="rs-to">Date To</label>
-            <input id="rs-to" name="to" type="date" defaultValue={today} className={fieldClassName} />
+            <DatePicker id="rs-to" name="to" defaultValue={today} />
           </div>
           <div className="flex items-end">
             <button
@@ -164,14 +168,8 @@ export const SupplierRsInquiry: React.FC = () => {
         </p>
       )}
 
-      {!error && rows.length === 0 && (
-        <p role="status" className="mx-auto mt-8 max-w-md rounded-xl border border-[#E0E0E0] bg-[#F4F6F9] px-4 py-4 text-center font-heading text-sm font-bold text-[#212121]">
-          No transactions found
-        </p>
-      )}
-
-      {rows.length > 0 && (
-        <div className="mt-6">
+      {searched && !error && (
+        <div className="mt-6 overflow-x-auto">
           <table className="stack-table w-full border-collapse text-xs lg:table">
             <thead className="bg-[#212121] text-white">
               <tr>
@@ -183,6 +181,13 @@ export const SupplierRsInquiry: React.FC = () => {
               </tr>
             </thead>
             <tbody>
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="border border-[#E0E0E0] px-3 py-4 text-center text-sm font-semibold text-[#616161]">
+                    No transactions found
+                  </td>
+                </tr>
+              )}
               {rows.map((row) => (
                 <tr key={row.rsId} className="text-[#212121]">
                   <td data-label="#" className="border border-[#E0E0E0] px-3 py-3 font-semibold">#{row.movementNo}</td>

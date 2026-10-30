@@ -1,16 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { apvViewPath } from '../../../../components/bir2307Print';
 
 interface CheckVoucherLine {
   transType: string;
   transactionNumber: string;
+  transNo: number | null;
+  transTypeId: number;
   date: string;
   supplierInvoice: string;
   amount: number;
 }
 
 interface CheckVoucher {
+  branch: number | null;
   cvNo: string;
   cvDate: string;
   supplierName: string;
@@ -36,6 +40,8 @@ export default function ViewCheckVoucherPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const branchNumber = Number(params.get('branch'));
+    const branch = params.has('branch') && Number.isInteger(branchNumber) && branchNumber >= 0 ? branchNumber : null;
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://127.0.0.1:3001';
     let cancelled = false;
 
@@ -48,7 +54,7 @@ export default function ViewCheckVoucherPage() {
         return body;
       })
       .then((body) => {
-        if (!cancelled) setVoucher(body);
+        if (!cancelled) setVoucher({ ...body, branch });
       })
       .catch((reason: unknown) => {
         if (!cancelled) {
@@ -107,7 +113,13 @@ export default function ViewCheckVoucherPage() {
           {voucher.lines.map((line, index) => (
             <tr key={`${line.transType}-${line.transactionNumber}-${index}`}>
               <td style={cellStyle}>{line.transType}</td>
-              <td style={cellStyle}>{line.transactionNumber}</td>
+              <td style={cellStyle}>
+                {line.transNo && voucher.branch !== null ? (
+                  <a href={apvViewPath(voucher.branch, line.transNo, line.transTypeId)} target="_blank" rel="noopener noreferrer" style={{ color: '#212121', fontWeight: 700, textDecoration: 'underline' }}>
+                    {line.transactionNumber}
+                  </a>
+                ) : line.transactionNumber}
+              </td>
               <td style={cellStyle}>{displayDate(line.date)}</td>
               <td style={cellStyle}>{line.supplierInvoice}</td>
               <td style={{ ...cellStyle, textAlign: 'right' }}>{money(line.amount)}</td>

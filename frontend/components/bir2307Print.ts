@@ -21,6 +21,11 @@ export function bir2307PrintPath(target: Bir2307Target): string {
   return `${FRONTEND_BASE}/purchasing/view/bir-2307?${params.toString()}`;
 }
 
+export function checkVoucherPath(branch: number | null, cvNo: string): string {
+  if (branch === null || !cvNo.trim()) return '#';
+  return `/purchasing/view/check-voucher?${new URLSearchParams({ branch: String(branch), cv_no: cvNo.trim() }).toString()}`;
+}
+
 export interface RsSlipTarget {
   rsId: string;
   branch: number;
@@ -31,9 +36,8 @@ export function rsSlipPath(target: RsSlipTarget): string {
   const params = new URLSearchParams({
     rs_id: target.rsId,
     branch: String(target.branch),
-    name: target.database,
   });
-  return `${BIR_2307_BASE}/purchasing/view/view_rs_slip.php?${params.toString()}`;
+  return `/purchasing/view/converted/rs-slip?${params.toString()}`;
 }
 
 export interface PurchaseOrderPrintTarget {
@@ -76,4 +80,9 @@ export function cvViewPath(branch: number, cvId: number): string {
     branch: String(branch),
   });
   return `/purchasing/view/view-cv?${params.toString()}`;
+}
+
+export function apvViewPath(branch: number, transNo: number, type = 20): string {
+  const params = new URLSearchParams({ trans_no: String(transNo), branch: String(branch), type: String(type) });
+  return `/purchasing/view/view-apv?${params.toString()}`;
 }

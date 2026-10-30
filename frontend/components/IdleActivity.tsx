@@ -15,7 +15,7 @@ export function IdleActivity() {
     let lastWrite = 0;
     const onActivity = () => {
       const now = Date.now();
-      if (now - lastWrite < 1000) return;
+      if (now - lastWrite < 5000) return;
       lastWrite = now;
       touchActivity();
     };
