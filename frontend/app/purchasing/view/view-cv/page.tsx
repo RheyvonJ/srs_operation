@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { apvViewPath } from '../../../../components/bir2307Print';
+import { apvViewPath } from '@/shared/navigation/printPaths';
 
 interface CheckVoucherLine {
   transType: string;
   transactionNumber: string;
+  reference: string;
   transNo: number | null;
   transTypeId: number;
   date: string;
@@ -78,6 +79,7 @@ export default function ViewCheckVoucherPage() {
 
   return (
     <main className="cv-page">
+      <div className="print:hidden" style={{ marginBottom: 12, textAlign: 'right' }}><button type="button" onClick={() => window.print()}>Print CV Details</button></div>
       <h1 style={{ margin: '0 0 16px', fontSize: 20, textAlign: 'center' }}>Check Voucher # {voucher.cvNo}</h1>
       <table className="cv-meta" style={{ width: '100%', margin: '0 auto 16px', borderCollapse: 'collapse', fontSize: 13 }}>
         <tbody>
@@ -102,7 +104,7 @@ export default function ViewCheckVoucherPage() {
       <table className="cv-lines" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
         <thead>
           <tr>
-            {['Transaction Type', 'Trxn #', 'Date', 'Supplier Invoice', 'Amount'].map((heading) => (
+            {['Transaction Type', 'Trxn #', 'Reference', 'Date', 'Supplier Invoice', 'Amount'].map((heading) => (
               <th key={heading} style={{ border: '1px solid #c8c8c8', background: '#f3f3f3', padding: '6px 8px', textAlign: heading === 'Amount' ? 'right' : 'left' }}>
                 {heading}
               </th>
@@ -120,6 +122,7 @@ export default function ViewCheckVoucherPage() {
                   </a>
                 ) : line.transactionNumber}
               </td>
+              <td style={cellStyle}>{line.reference}</td>
               <td style={cellStyle}>{displayDate(line.date)}</td>
               <td style={cellStyle}>{line.supplierInvoice}</td>
               <td style={{ ...cellStyle, textAlign: 'right' }}>{money(line.amount)}</td>
@@ -155,7 +158,7 @@ function Field({ label, value, strong = false }: { label: string; value: string;
 function Total({ label, amount }: { label: string; amount: number }) {
   return (
     <tr>
-      <td style={{ ...cellStyle, textAlign: 'right', fontWeight: 700 }} colSpan={4}>{label}</td>
+      <td style={{ ...cellStyle, textAlign: 'right', fontWeight: 700 }} colSpan={5}>{label}</td>
       <td style={{ ...cellStyle, textAlign: 'right', fontWeight: 700 }}>{amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
     </tr>
   );

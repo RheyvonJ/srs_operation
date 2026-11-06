@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@source "./app";
+@source "./features";
+@source "./shared";
+
 @theme {
   --font-heading: 'Montserrat', 'Segoe UI', system-ui, sans-serif;
   --font-display: 'Anton', 'Segoe UI', system-ui, sans-serif;
@@ -13,6 +17,24 @@
   --color-status-warning: #ED6C02;
   --color-status-error: #D32F2F;
   --color-status-info: #0288D1;
+}
+.login-shell { min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; background: #F4F6F9; color: #212121; }
+.login-main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+.login-card { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); width: 100%; max-width: 72rem; min-height: 660px; margin: auto; overflow: hidden; border: 1px solid #E0E0E0; border-radius: 1.5rem; background: #fff; box-shadow: 0 24px 50px rgb(33 33 33 / 10%); }
+.login-brand-panel { display: block; min-width: 0; }
+.login-form-panel { position: relative; display: flex; align-items: center; justify-content: center; min-width: 0; overflow: hidden; padding: 2rem; background: #F4F6F9; }
+.brand-hero { position: relative; display: flex; min-height: 660px; height: 100%; flex-direction: column; justify-content: space-between; overflow: hidden; background: #212121; color: #fff; }
+.brand-hero-backdrop { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+.brand-hero-backdrop img { object-fit: cover; object-position: center 70%; }
+.brand-hero > :not(.brand-hero-backdrop) { position: relative; z-index: 1; }
+@media (min-width: 1280px) {
+  .login-card { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 639px) {
+  .login-main { padding: 1rem; }
+  .login-card { grid-template-columns: 1fr; min-height: 0; border-radius: 1rem; }
+  .login-brand-panel { display: none; }
+  .login-form-panel { padding: 1rem; }
 }
 html {
   overflow-x: clip;

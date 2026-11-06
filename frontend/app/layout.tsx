@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { IdleActivity } from "../components/IdleActivity";
+import { IdleActivity } from "../shared/components/IdleActivity";
 import "../index.css";
 
 export const viewport: Viewport = {

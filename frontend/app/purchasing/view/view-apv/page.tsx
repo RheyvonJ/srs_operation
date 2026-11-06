@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { SupplierApVoucherView } from '@/components/purchasing/SupplierApVoucherView';
-import { SupplierDebitMemoView } from '@/components/purchasing/SupplierDebitMemoView';
-import { SupplierPaymentView } from '@/components/purchasing/SupplierPaymentView';
-import type { SupplierTransactionViewData } from '@/components/purchasing/supplierTransactionTypes';
+import { SupplierApVoucherView } from '@/features/suppliers/transaction-views/SupplierApVoucherView';
+import { SupplierDebitMemoView } from '@/features/suppliers/transaction-views/SupplierDebitMemoView';
+import { SupplierPaymentView } from '@/features/suppliers/transaction-views/SupplierPaymentView';
+import type { SupplierTransactionViewData } from '@/features/suppliers/transaction-views/supplierTransactionTypes';
 
 export default function ViewSupplierTransactionPage() {
   const [transaction, setTransaction] = useState<SupplierTransactionViewData | null>(null);
@@ -31,7 +31,10 @@ export default function ViewSupplierTransactionPage() {
 
   if (error) return <p role="alert" style={{ margin: 24, color: '#D32F2F' }}>{error}</p>;
   if (!transaction) return <p style={{ margin: 24 }}>Loading supplier transaction...</p>;
-  if (transaction.viewKind === 'payment') return <SupplierPaymentView payment={transaction} />;
-  if (transaction.viewKind === 'general-ledger') return <SupplierDebitMemoView memo={transaction} />;
-  return <SupplierApVoucherView voucher={transaction} />;
+  return <>
+    <div className="print:hidden" style={{ margin: 12, textAlign: 'right' }}><button type="button" onClick={() => window.print()}>Print Transaction</button></div>
+    {transaction.viewKind === 'payment' ? <SupplierPaymentView payment={transaction} />
+      : transaction.viewKind === 'general-ledger' ? <SupplierDebitMemoView memo={transaction} />
+        : <SupplierApVoucherView voucher={transaction} />}
+  </>;
 }

@@ -17,3 +17,248 @@ body {
   color: #212121;
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.fa-dashboard {
+  min-height: 100vh;
+  background: #fff !important;
+  color: #333 !important;
+  font: 11px/1.5 Verdana, Arial, Helvetica, sans-serif;
+}
+
+.fa-dashboard button,
+.fa-dashboard input,
+.fa-dashboard select {
+  font: 11px Verdana, Arial, Helvetica, sans-serif;
+}
+
+.fa-dashboard .fa-header {
+  padding: 8px 14px !important;
+  color: #808080 !important;
+  background: #fff !important;
+  border: 0 !important;
+}
+
+.fa-dashboard .fa-header h1 {
+  color: #466f01 !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+}
+
+.fa-dashboard .fa-sidebar {
+  width: min(100%, 250px) !important;
+  padding: 8px;
+  background: #fcfcfc !important;
+  border-right: 1px solid #8cacbb !important;
+}
+
+.fa-dashboard .fa-menu-folder {
+  border: 0 !important;
+  border-bottom: 1px solid #8cacbb !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #555 !important;
+  font-weight: 700;
+}
+
+.fa-dashboard .fa-menu-item {
+  border-radius: 0 !important;
+  color: #045c97 !important;
+  font-size: 12px !important;
+}
+
+.fa-dashboard .fa-menu-item-active {
+  background: #045c97 !important;
+  color: #fff !important;
+}
+
+.fa-dashboard .fa-page-title {
+  padding: 5px 0;
+  border-bottom: 1px solid #8cacbb;
+  color: #555 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+
+.fa-dashboard .fa-button,
+.fa-dashboard .fa-record-card {
+  border: 1px solid #8cacbb !important;
+  border-radius: 0 !important;
+  background: #f3f3f3 !important;
+  color: #045c97 !important;
+  box-shadow: none !important;
+}
+
+.fa-home .fa-record-card {
+  min-height: 110px;
+  padding: 12px !important;
+}
+
+.fa-home .fa-record-card > span:first-child > span {
+  width: 28px;
+  height: 28px;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #045c97 !important;
+}
+
+.fa-home h1 {
+  color: #466f01 !important;
+  font-size: 18px !important;
+}
+
+.fa-dashboard .fa-footer {
+  padding: 5px 8px !important;
+  border: 1px solid #ccc !important;
+  background: #ececec !important;
+  color: #808080 !important;
+}
+
+.fa-module {
+  margin-top: 10px !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  padding: 10px 0 !important;
+  box-shadow: none !important;
+}
+
+.fa-filters {
+  display: flex;
+  max-width: none !important;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px 14px;
+  margin: 0 !important;
+  padding: 8px 4px 12px;
+  border-bottom: 1px solid #ccc;
+  background: #fff;
+}
+
+.fa-filters > div {
+  display: flex !important;
+  min-width: 140px !important;
+  flex: 1 1 150px;
+  flex-direction: column;
+  gap: 3px !important;
+  align-items: stretch !important;
+}
+
+.fa-filters label {
+  color: #333 !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
+.fa-filters input,
+.fa-filters select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 260px;
+  height: 24px !important;
+  border: 1px solid #7f9db9 !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  padding: 2px 4px !important;
+  color: #333 !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  box-shadow: none !important;
+}
+
+.fa-filters > button,
+.fa-filters button[type='submit'] {
+  min-height: 24px !important;
+  width: auto !important;
+  border: 1px solid #06c !important;
+  border-radius: 0 !important;
+  background: #e2e2e2 !important;
+  padding: 2px 8px !important;
+  color: #333 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  box-shadow: none !important;
+}
+
+.fa-filters button svg {
+  display: none;
+}
+
+.fa-module .fa-table {
+  width: 100%;
+  border: 1px solid #aaa;
+  border-collapse: collapse;
+  color: #333;
+  font: 11px/1.5 Verdana, Arial, Helvetica, sans-serif;
+}
+
+.fa-module .fa-table th {
+  border: 1px solid #b5b5b5 !important;
+  background: #d15705 !important;
+  padding: 4px 6px !important;
+  color: #fff !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-align: center;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
+.fa-module .fa-table td {
+  border: 1px solid #ccc !important;
+  background: #fff;
+  padding: 4px 6px !important;
+  color: #333 !important;
+  font-size: 11px !important;
+}
+
+.fa-module .fa-table tbody tr:nth-child(even) td {
+  background: #f3f3f3;
+}
+
+.fa-module .fa-table a {
+  color: #00f !important;
+  text-decoration: none;
+}
+
+.fa-module .fa-table a:hover {
+  color: #4f9adb !important;
+  text-decoration: underline;
+}
+
+.fa-module > .overflow-x-auto {
+  overflow-x: auto;
+}
+
+.fa-module .text-\[\#880000\] td {
+  background: #f3f3f3 !important;
+  color: #333 !important;
+}
+
+.fa-filters > label {
+  display: flex;
+  min-width: 150px;
+  flex: 1 1 160px;
+  flex-direction: column;
+  gap: 3px;
+}
+
+@media (max-width: 767px) {
+  .fa-dashboard .fa-sidebar {
+    border-right: 1px solid #8cacbb !important;
+  }
+
+  .fa-filters > div,
+  .fa-filters > label {
+    flex-basis: calc(50% - 14px);
+  }
+
+  .fa-filters > button {
+    flex: 0 0 auto;
+  }
+}

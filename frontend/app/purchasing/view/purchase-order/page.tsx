@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { purchaseOrderSignaturePath } from '../../../../components/bir2307Print';
+import { purchaseOrderSignaturePath } from '@/shared/navigation/printPaths';
 
 interface PurchaseOrderItem {
   barcode: string;
@@ -101,12 +101,17 @@ export default function PurchaseOrderPage() {
   }
 
   return (
-    <main style={{ boxSizing: 'border-box', maxWidth: 860, margin: '16px auto', padding: '0 16px 32px', color: '#111', fontFamily: 'Arial, Helvetica, sans-serif' }}>
+    <main className="po-print-screen" style={{ boxSizing: 'border-box', width: '8.5in', minHeight: '11in', margin: '24px auto', padding: '.45in .5in', background: '#fff', color: '#111', fontFamily: 'Arial, Helvetica, sans-serif', boxShadow: '0 2px 14px #0004' }}>
       <style>{`
         @media print {
+          @page { size: letter; margin: 12mm; }
           .po-toolbar { display: none !important; }
-          body { background: #fff; }
+          body { background: #fff !important; }
+          .po-print-screen { width: auto !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; }
+          .po-print-screen thead { display: table-header-group; }
+          .po-print-screen tr { break-inside: avoid; }
         }
+        @media screen and (max-width: 820px) { .po-print-screen { width: 100% !important; min-height: 0 !important; margin: 12px auto !important; padding: 20px !important; } }
       `}</style>
       <div className="po-toolbar" style={{ marginBottom: 16 }}>
         <button
