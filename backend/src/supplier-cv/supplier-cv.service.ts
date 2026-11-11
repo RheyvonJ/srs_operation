@@ -41,6 +41,7 @@ export interface SupplierCvLine {
 export interface CheckVoucherLine {
   transType: string;
   transactionNumber: string;
+  reference: string;
   transNo: number | null;
   transTypeId: number;
   date: string;
@@ -211,7 +212,7 @@ function periodOf(iso: string): { from: Bir2307DateParts; to: Bir2307DateParts; 
     return null;
   }
   const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
-  const parts = { month: match[2], year: match[1].slice(2) };
+  const parts = { month: match[2], year: match[1] };
   const slot = (((month - 1) % 3) + 1) as 1 | 2 | 3;
   return {
     from: { ...parts, day: '1' },
@@ -379,7 +380,8 @@ export class SupplierCvService {
         const supplierInvoice = (row.suppReference ?? '').trim();
         return {
           transType: transType === SUPPLIER_INVOICE ? 'AP Voucher' : TRANS_TYPE_NAMES[transType] ?? `Type ${transType}`,
-          transactionNumber: transType === SUPPLIER_PAYMENT || !reference ? String(transNo) : reference,
+          transactionNumber: String(transNo),
+          reference,
           transNo: SUPPLIER_TRANSACTION_TYPES.includes(transType) ? transNo : null,
           transTypeId: transType,
           date: row.tranDate ?? '',

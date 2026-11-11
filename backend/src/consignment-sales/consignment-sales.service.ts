@@ -2,11 +2,6 @@ import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { Knex } from 'knex';
 import { KNEX } from '../database/database.module.js';
 
-export interface ConsignmentPrint {
-  database: string;
-  consignmentId: number;
-}
-
 export interface ConsignmentLine {
   line: number;
   reference: string;
@@ -16,7 +11,6 @@ export interface ConsignmentLine {
   quantity: number;
   costOfSales: number;
   sales: number;
-  print: ConsignmentPrint;
 }
 
 export interface ConsignmentTotals {
@@ -107,7 +101,6 @@ export class ConsignmentSalesService {
         quantity,
         costOfSales,
         sales,
-        print: { database: schema, consignmentId },
       });
     }
 

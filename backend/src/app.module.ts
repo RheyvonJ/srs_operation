@@ -2,8 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
-import { AuthController } from './auth/auth.controller.js';
-import { AuthService } from './auth/auth.service.js';
+import { AuthModule } from './auth/auth.module.js';
 import { BranchesModule } from './branches/branches.module.js';
 import { DatabaseModule } from './database/database.module.js';
 import { ConsignmentSalesModule } from './consignment-sales/consignment-sales.module.js';
@@ -18,6 +17,7 @@ import { FinancialViewsModule } from './financial-views/financial-views.module.j
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     DatabaseModule,
+    AuthModule,
     BranchesModule,
     SupplierCvModule,
     SupplierApvModule,
@@ -27,7 +27,7 @@ import { FinancialViewsModule } from './financial-views/financial-views.module.j
     CheckprintModule,
     FinancialViewsModule,
   ],
-  controllers: [AppController, AuthController],
-  providers: [AppService, AuthService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

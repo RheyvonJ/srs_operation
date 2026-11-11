@@ -1,10 +1,20 @@
-import { Body, Controller, Get, HttpException, Logger, Post, Query, ServiceUnavailableException } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, Logger, Post, Query, Res, ServiceUnavailableException } from '@nestjs/common';
+import type { Response } from 'express';
 import { CheckprintService } from './checkprint.service.js';
 
 @Controller('checkprint')
 export class CheckprintController {
   private readonly logger = new Logger(CheckprintController.name);
   constructor(private readonly service: CheckprintService) {}
+
+  @Get('voucher.pdf')
+  async voucherPdf(@Query() query: Record<string, unknown>, @Res() response: Response) {
+    try {
+      const { buffer, cvNo } = await this.service.voucherPdf(query);
+      response.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': `inline; filename="cv-${cvNo.replace(/[^A-Za-z0-9_-]/g, '')}.pdf"` });
+      response.end(buffer);
+    } catch (e) { this.handle(e, 'Could not generate the Check Voucher PDF.'); }
+  }
 
   @Get('voucher')
   async voucher(@Query() query: Record<string, unknown>) {

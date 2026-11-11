@@ -527,7 +527,7 @@ export class FinancialViewsService {
           : Number(h.rs_action) === 2
             ? 'Disposed'
             : 'Returned to Supplier',
-      saToBo: Number(h.trans_no) || Number(h.rs_id),
+      saToBo: Number(h.rs_id),
       remarks: text(h.comment),
       approverRemarks: text(h.approver_comment),
       items,

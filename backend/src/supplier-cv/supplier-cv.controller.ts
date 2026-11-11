@@ -7,9 +7,12 @@ import {
   Logger,
   Post,
   Query,
+  Res,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { SupplierCvService } from './supplier-cv.service.js';
+import { createBir2307Pdf } from './bir2307-pdf.js';
 
 @Controller('supplier-cv')
 export class SupplierCvController {
@@ -48,6 +51,20 @@ export class SupplierCvController {
       throw new ServiceUnavailableException(
         'Could not load BIR 2307. Please check the server connection.',
       );
+    }
+  }
+
+  @Get('bir2307.pdf')
+  async bir2307Pdf(@Query() query: Record<string, unknown>, @Res() response: Response) {
+    try {
+      const form = await this.supplierCvService.bir2307(query);
+      const pdf = await createBir2307Pdf(form);
+      response.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'inline; filename="BIR-2307.pdf"' });
+      response.end(Buffer.from(pdf));
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error('Failed to generate BIR 2307 PDF', error instanceof Error ? error.stack : undefined);
+      throw new ServiceUnavailableException('Could not generate BIR 2307 PDF. Please check the server connection.');
     }
   }
 

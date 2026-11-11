@@ -13,4 +13,4 @@ The converted views use branch scoped FrontAccounting tables through `FinancialV
 | `view_supp_credit.php` | `supplier-credit` | `supplier-credit` |
 | `view_rs.php`, `view_rs_slip.php`, `view_movement.php` | `rs`, `rs-slip`, `movement` | same names |
 
-`purchasing/view/srs_view_po.php` remains in PHP because it reads `PurchaseOrder`, `PurchaseOrderLine`, `vendor`, and `Terms` from the separate SQL Server configured in the legacy PHP runtime. This app has no SQL Server driver or connection configuration. Its similarly named MySQL purchase-order sources are a different data source and cannot safely replace those queries. Port that page after the SQL Server connection is added.
+The SQL Server purchase-order view (`PurchaseOrder`, `PurchaseOrderLine`, `vendor`, and `Terms`) is not implemented in NestJS. The similarly named MySQL purchase-order sources are a different data source and cannot safely replace those queries; add a SQL Server connection before porting that view.

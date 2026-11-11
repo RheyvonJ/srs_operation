@@ -12,6 +12,12 @@ export interface CheckVoucherPrintLine {
   comments: string[];
 }
 
+export interface CheckVoucherDebitMemoSection {
+  heading: string;
+  items: Array<{ description: string; uom: string; quantity: number; unitCost: number; extended: number }>;
+  total: number;
+}
+
 export interface CheckVoucherPrintData {
   branch: number;
   id: number;
@@ -33,12 +39,14 @@ export interface CheckVoucherPrintData {
   cvPrinted: boolean;
   checkPrinted: boolean;
   paymentType: 'cheque' | 'online' | 'other';
+  template: 'cv_blank' | 'cv_blank_mc' | 'cv_blank_ol' | 'cv_blank_void';
   bankName: string;
   bankAccountName: string;
   bankDate: string;
   cheques: Array<{ number: string; date: string; amount: number; payTo: string }>;
   comments: string[];
   lines: CheckVoucherPrintLine[];
+  debitMemoSections: CheckVoucherDebitMemoSection[];
   glItems: Array<{ account: string; accountName: string; amount: number; memo: string }>;
   preparedBy: string;
   preparedAt: string;

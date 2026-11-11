@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-export const IDLE_LIMIT_MS = 60_000;
+export const IDLE_LIMIT_MS = 30 * 60_000;
 export const ACTIVITY_KEY = 'srs-nova-last-activity';
 
 export function touchActivity(): void {

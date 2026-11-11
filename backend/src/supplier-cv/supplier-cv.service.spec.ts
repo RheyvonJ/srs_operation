@@ -205,7 +205,8 @@ describe('viewCheckVoucher', () => {
       lines: [
         {
           transType: 'AP Voucher',
-          transactionNumber: '200197',
+          transactionNumber: '158335',
+          reference: '200197',
           transNo: 158335,
           transTypeId: 20,
           date: '2026-10-09',
@@ -214,7 +215,8 @@ describe('viewCheckVoucher', () => {
         },
         {
           transType: 'Supplier Debit Memo',
-          transactionNumber: '227005',
+          transactionNumber: '229582',
+          reference: '227005',
           transNo: 229582,
           transTypeId: 53,
           date: '2026-10-07',
@@ -224,6 +226,7 @@ describe('viewCheckVoucher', () => {
         {
           transType: 'Supplier Payment',
           transactionNumber: '900',
+          reference: 'CHK-1',
           transNo: 900,
           transTypeId: 22,
           date: '2026-10-09',
@@ -278,8 +281,8 @@ describe('bir2307', () => {
     const service = createService(db);
 
     await expect(service.bir2307(query)).resolves.toMatchObject({
-      periodFrom: { month: '02', day: '1', year: '24' },
-      periodTo: { month: '02', day: '29', year: '24' },
+      periodFrom: { month: '02', day: '1', year: '2024' },
+      periodTo: { month: '02', day: '29', year: '2024' },
       quarterSlot: 2,
       payeeTin: ['004', '526', '681', '000'],
       payeeName: 'ACME TRADING',
@@ -321,8 +324,8 @@ describe('bir2307', () => {
     const service = createService(db);
 
     await expect(service.bir2307(query)).resolves.toMatchObject({
-      periodFrom: { month: '10', day: '1', year: '26' },
-      periodTo: { month: '10', day: '31', year: '26' },
+      periodFrom: { month: '10', day: '1', year: '2026' },
+      periodTo: { month: '10', day: '31', year: '2026' },
       quarterSlot: 1,
       payeeTin: ['004', '526', '681', '123'],
       payeeName: 'ACME SUPPLY ',
@@ -365,4 +368,3 @@ describe('SupplierCvController', () => {
     await expect(controller.bir2307({ branch: '4' })).rejects.toBeInstanceOf(ServiceUnavailableException);
   });
 });
-

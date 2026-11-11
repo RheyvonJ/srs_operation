@@ -101,7 +101,6 @@ describe('ConsignmentSalesService', () => {
           quantity: 4.5,
           costOfSales: 1008,
           sales: 1120,
-          print: { database: 'srs_aria_agora', consignmentId: 44 },
         },
         {
           line: 2,
@@ -112,7 +111,6 @@ describe('ConsignmentSalesService', () => {
           quantity: 2,
           costOfSales: 100.13,
           sales: 100.13,
-          print: { database: 'srs_aria_agora', consignmentId: 45 },
         },
       ],
       totals: { quantity: 6.5, costOfSales: 1108.13, sales: 1220.13 },

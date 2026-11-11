@@ -106,7 +106,7 @@ export default function App() {
               <div className="relative z-10 w-full">
                 {idleNotice && (
                   <p role="status" className="mx-auto mb-4 max-w-[460px] rounded-xl border border-[#FFCC80] bg-[#FFF3E0] px-4 py-3 text-center text-xs font-medium text-[#E65100]">
-                    You were signed out after 1 minute of inactivity.
+                    You were signed out after 30 minutes of inactivity.
                   </p>
                 )}
                 <LoginForm onSuccess={handleLoginSuccess} />

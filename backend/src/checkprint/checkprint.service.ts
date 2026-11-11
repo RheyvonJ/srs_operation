@@ -3,6 +3,7 @@ import type { Knex } from 'knex';
 import { KNEX } from '../database/database.module.js';
 import { checkprintRows, checkprintMoney, checkprintEnglishWords, CHECKPRINT_SHORT_TYPES, type CheckVoucherPrintData } from './checkprint.types.js';
 import { cvExportRows, mbCcws, type CheckExportVoucher } from './checkprint-format.js';
+import { createCheckVoucherPdf } from './checkprint-pdf.js';
 
 const IDENTIFIER = /^[A-Za-z0-9_]+$/;
 
@@ -10,20 +11,28 @@ const IDENTIFIER = /^[A-Za-z0-9_]+$/;
 export class CheckprintService {
   constructor(@Inject(KNEX) private readonly db: Knex) {}
 
+  async voucherPdf(query: unknown): Promise<{ buffer: Buffer; cvNo: string }> {
+    const voucher = await this.voucher(query);
+    const buffer = await createCheckVoucherPdf(voucher);
+    await this.markPrinted({ branch: voucher.branch, cv_id: voucher.id });
+    return { buffer, cvNo: voucher.cvNo };
+  }
+
   async voucher(query: unknown): Promise<CheckVoucherPrintData> {
     const input = this.input(query);
     const schema = await this.schema(input.branch);
     const cv = checkprintRows<any>(await this.db.raw(
-      `SELECT h.*, s.supp_name AS supplierName, s.address AS supplierAddress,
+      `SELECT h.*, DATE_FORMAT(h.cv_date,'%Y-%m-%d') AS cvDateFormatted,
+              s.supp_name AS supplierName, s.address AS supplierAddress,
               b.coy_name AS companyName, b.postal_address AS companyAddress
        FROM \`${schema}\`.\`0_cv_header\` h
        LEFT JOIN \`${schema}\`.\`0_suppliers\` s ON h.person_type = 3 AND s.supplier_id = CAST(h.person_id AS UNSIGNED)
        CROSS JOIN \`${schema}\`.\`0_company\` b
-       WHERE h.cv_no = ? LIMIT 1`, [input.cvNo],
+       WHERE ${input.cvId ? 'h.id = ?' : 'h.cv_no = ?'} LIMIT 1`, [input.cvId ?? input.cvNo],
     ))[0];
     if (!cv) throw new NotFoundException('Check Voucher was not found.');
     const id = Number(cv.id);
-    const [details, notes, audits, bank, checks, glItems, debitMemos, company, voidRows] = await Promise.all([
+    const [details, notes, audits, bank, checks, glItems, company, voidRows, debitMemos] = await Promise.all([
       this.db.raw(`SELECT d.id, d.trans_type AS transType, d.trans_no AS transNo, d.amount, d.voided,
           DATE_FORMAT(CASE WHEN d.trans_type=20 THEN st.del_date ELSE st.tran_date END,'%Y-%m-%d') AS tranDate,
           st.reference, st.supp_reference AS suppReference, st.ewt,
@@ -31,7 +40,7 @@ export class CheckprintService {
         FROM \`${schema}\`.\`0_cv_details\` d
         LEFT JOIN \`${schema}\`.\`0_supp_trans\` st ON st.type=d.trans_type AND st.trans_no=d.trans_no
         LEFT JOIN \`${schema}\`.\`0_comments\` c ON c.type=d.trans_type AND c.id=d.trans_no
-        WHERE d.cv_id=? AND d.trans_type<>22 GROUP BY d.id ORDER BY d.amount DESC`, [id]),
+        WHERE d.cv_id=? AND d.trans_type<>22 AND d.voided<>1 GROUP BY d.id ORDER BY d.amount DESC`, [id]),
       this.db.raw(`SELECT memo_ AS memo FROM \`${schema}\`.\`0_comments\` WHERE type=99 AND id=? ORDER BY date_`, [id]),
       this.db.raw(`SELECT a.description,a.user,DATE_FORMAT(a.stamp,'%Y-%m-%d %H:%i:%s') AS stamp,u.real_name AS userName
         FROM \`${schema}\`.\`0_audit_trail\` a LEFT JOIN \`${schema}\`.\`0_users\` u ON u.id=a.user
@@ -44,46 +53,70 @@ export class CheckprintService {
         FROM \`${schema}\`.\`0_cheque_details\` cd JOIN \`${schema}\`.\`0_bank_trans\` bt ON bt.id=cd.bank_trans_id
         LEFT JOIN \`${schema}\`.\`0_bank_accounts\` ba ON ba.id=bt.bank_act
         WHERE bt.id=? AND cd.type=bt.type ORDER BY cd.id`, [cv.bank_trans_id ? Number(cv.bank_trans_id) : -1]),
-      this.db.raw(`SELECT DISTINCT gl.account, coa.account_name AS accountName, gl.amount, gl.memo_
+      this.db.raw(`SELECT gl.account, coa.account_name AS accountName, gl.amount, gl.memo_
         FROM \`${schema}\`.\`0_gl_trans\` gl LEFT JOIN \`${schema}\`.\`0_chart_master\` coa ON coa.account_code=gl.account
-        LEFT JOIN \`${schema}\`.\`0_cv_details\` d ON d.trans_type=gl.type AND d.trans_no=gl.type_no AND d.cv_id=?
-        LEFT JOIN \`${schema}\`.\`0_company\` co ON 1=1
-        WHERE ((gl.type=99 AND gl.type_no=?) OR d.cv_id=?)
-          AND gl.account<>co.creditors_act AND gl.account<>co.creditors_act_nt ORDER BY gl.counter`, [id,id,id]),
-      this.db.raw(`SELECT st.trans_no AS transNo,st.reference,st.ov_amount,st.ov_gst,st.ewt,st.tran_date,
-          GROUP_CONCAT(DISTINCT c.memo_ ORDER BY c.date_ SEPARATOR '\\n') AS memo
-        FROM \`${schema}\`.\`0_supp_trans\` st LEFT JOIN \`${schema}\`.\`0_comments\` c ON c.type=53 AND c.id=st.trans_no
-        WHERE st.type=53 AND st.cv_id=? GROUP BY st.trans_no`, [id]),
+        LEFT JOIN \`${schema}\`.\`0_bank_trans\` bt ON bt.id=?
+        WHERE (gl.type=99 AND gl.type_no=? OR gl.type=bt.type AND gl.type_no=bt.trans_no)
+        ORDER BY gl.counter`, [cv.bank_trans_id || 0,id]),
       this.db.raw(`SELECT coy_name AS companyName,postal_address AS companyAddress,creditors_act AS creditorsAct,creditors_act_nt AS creditorsActNt FROM \`${schema}\`.\`0_company\` LIMIT 1`),
       this.db.raw(`SELECT COUNT(*) AS count FROM \`${schema}\`.\`0_voided\` WHERE type=? AND id=?`,[99,id]),
+      this.db.raw(`SELECT st.reference,st.supp_reference AS suppReference,st.ov_amount AS amount,
+          GROUP_CONCAT(DISTINCT c.memo_ ORDER BY c.date_ SEPARATOR '\\n') AS memo
+        FROM \`${schema}\`.\`0_supp_trans\` st
+        LEFT JOIN \`${schema}\`.\`0_comments\` c ON c.type=st.type AND c.id=st.trans_no
+        WHERE st.type=53 AND st.cv_id=? GROUP BY st.trans_no ORDER BY st.tran_date,st.trans_no`, [id]),
     ]);
+    const debitMemoRows = checkprintRows<any>(debitMemos);
+    const movementNos = [...new Set(debitMemoRows.map((row:any) => /rs\s*#\s*(\d+)/i.exec(String(row.suppReference ?? ''))?.[1]).filter((value): value is string => Boolean(value)))];
+    const movementItems = movementNos.length ? checkprintRows<any>(await this.db.raw(`SELECT h.movement_no AS movementNo,i.item_name AS description,i.uom,
+        i.qty AS quantity,i.price AS unitCost,ROUND(i.qty*i.price,3) AS extended
+      FROM returned_merchandise.\`0_rms_header\` h
+      JOIN returned_merchandise.\`0_rms_items\` i ON i.rs_id=h.rs_id
+      WHERE h.movement_type='R2SSA' AND LPAD(CAST(h.movement_no AS CHAR),10,'0') IN (${movementNos.map(()=>'?').join(',')}) ORDER BY h.movement_no,i.id`, movementNos.map((value)=>value.padStart(10,'0')))) : [];
+    const itemsByMovement = new Map<string, any[]>();
+    for (const item of movementItems) {
+      const key=String(Number(item.movementNo));
+      itemsByMovement.set(key,[...(itemsByMovement.get(key)??[]),item]);
+    }
     const lineRows = checkprintRows<any>(details);
-    const dmRows = checkprintRows<any>(debitMemos);
-    const lineData = [...lineRows, ...dmRows.map((x:any) => ({...x, transType:53, amount:checkprintMoney(x.ov_amount), ewt:x.ewt, voided:0}))];
+    const lineData = lineRows;
     const lineAmounts = lineData.map((x:any) => checkprintMoney(x.amount));
     const invoiceEwt = lineData.reduce((sum:number,x:any) => sum + (Number(x.transType)===20 ? checkprintMoney(x.ewt) : 0), 0);
     const audit = checkprintRows<any>(audits);
     const prepared = audit.find((x:any)=>x.description==='CV created');
     const approved = audit.find((x:any)=>x.description==='CV approved');
+    const auditName = (value: unknown) => String(value ?? '').trim().toLowerCase() === 'administrator' ? '' : String(value ?? '');
     const bankRow = checkprintRows<any>(bank)[0] ?? {};
     const companyRow = checkprintRows<any>(company)[0] ?? {};
     const voided = Number(checkprintRows<any>(voidRows)[0]?.count ?? 0) > 0;
+    const template = voided ? 'cv_blank_void' : Number(cv.online_payment) === 2 ? 'cv_blank_ol'
+      : Number(cv.online_check_payment) === 2 || Number(cv.online_aca_payment) === 2 ? 'cv_blank_mc' : 'cv_blank';
     const headerAmount = checkprintMoney(cv.amount);
     return {
-      branch: input.branch, id, cvNo: String(cv.cv_no), cvDate: this.date(cv.cv_date), createdAt: this.dateTime(cv.creation_date),
+      branch: input.branch, id, cvNo: String(cv.cv_no), cvDate: String(cv.cvDateFormatted ?? this.date(cv.cv_date)), createdAt: this.dateTime(cv.creation_date),
       supplierName: String(cv.supplierName ?? ''), supplierAddress: String(cv.supplierAddress ?? ''),
       companyName: String(companyRow.companyName ?? cv.companyName ?? ''), companyAddress: String(companyRow.companyAddress ?? cv.companyAddress ?? ''),
       amount: headerAmount, amountInWords: checkprintEnglishWords(Number(checkprintMoney(cv.amount))), ewt: checkprintMoney(cv.ewt), invoiceEwt,
-      ewtToDisplay: checkprintMoney(cv.ewt) || (this.date(cv.cv_date) < '2013-08-01' ? invoiceEwt : 0),
+      ewtToDisplay: checkprintMoney(cv.ewt) || (String(cv.cvDateFormatted ?? this.date(cv.cv_date)) < '2013-08-01' ? invoiceEwt : 0),
       total: voided ? lineAmounts.reduce((a:number,b:number)=>a+b,0) : headerAmount,
       approved: Number(cv.approved)===1, voided, cvPrinted:Number(cv.cv_printed)===1, checkPrinted:Number(cv.check_printed)===1,
       paymentType: Number(cv.online_payment)===2 || Number(cv.online_check_payment)===2 || Number(cv.online_aca_payment)===2 ? 'online' : cv.bank_trans_id ? 'cheque' : 'other',
-      bankName:String(bankRow.bankName??''), bankAccountName:String(bankRow.bankAccountName??''), bankDate:this.date(cv.cv_date),
+      template,
+      bankName:String(bankRow.bankName??''), bankAccountName:String(bankRow.bankAccountName??''), bankDate:String(cv.cvDateFormatted ?? this.date(cv.cv_date)),
       cheques:checkprintRows<any>(checks).map((x:any)=>({number:String(x.number??''),date:this.date(x.date),amount:checkprintMoney(x.amount),payTo:String(x.payTo??'')})),
       comments:checkprintRows<any>(notes).map((x:any)=>String(x.memo??'').trim()).filter(Boolean),
       lines:lineData.map((x:any,index:number)=>({id:Number(x.id??index),transType:Number(x.transType),transactionType:Number(x.transType)===53?'Supplier Debit Memo':Number(x.transType)===20?'AP Voucher':`Type ${x.transType}`,transNo:Number(x.transNo)||0,reference:String(x.reference??''),supplierReference:String(x.suppReference??''),date:this.date(x.tranDate),amount:checkprintMoney(x.amount),displayedAmount:checkprintMoney(x.amount)+(Number(x.transType)===20?checkprintMoney(x.ewt):0),ewt:checkprintMoney(x.ewt),comments:String(x.memo??'').split('\n').filter(Boolean),voided:Number(x.voided)===1})),
+      debitMemoSections:debitMemoRows.map((row:any)=>{
+        const movementNo=/rs\s*#\s*(\d+)/i.exec(String(row.suppReference??''))?.[1];
+        const items=movementNo?itemsByMovement.get(movementNo)??[]:[];
+        const fallbackAmount=Math.abs(Number(row.amount)||0);
+        return {heading:items.length?`RS#${movementNo!.padStart(10,'0')}`:'',
+          items:items.length?items.map((item:any)=>({description:String(item.description??''),uom:String(item.uom??''),quantity:Number(item.quantity)||0,unitCost:Number(item.unitCost)||0,extended:Number(item.extended)||0})):
+            [{description:`Supplier Debit Memo #${String(row.reference??'')} -- ${String(row.suppReference??'')} -- ${String(row.memo??'')}`.trim(),uom:'',quantity:0,unitCost:0,extended:fallbackAmount}],
+          total:items.reduce((sum:number,item:any)=>sum+(Number(item.extended)||0),0)||fallbackAmount};
+      }),
       glItems:checkprintRows<any>(glItems).map((x:any)=>({account:String(x.account??''),accountName:String(x.accountName??''),amount:checkprintMoney(x.amount),memo:String(x.memo_??'')})),
-      preparedBy:String(prepared?.userName??''),preparedAt:String(prepared?.stamp??''),approvedBy:String(approved?.userName??''),approvedAt:String(approved?.stamp??''),
+      preparedBy:auditName(prepared?.userName),preparedAt:String(prepared?.stamp??''),approvedBy:auditName(approved?.userName),approvedAt:String(approved?.stamp??''),
     };
   }
 
@@ -144,8 +177,7 @@ export class CheckprintService {
 
   async markPrinted(query: unknown): Promise<{ ok: true }> {
     const input=this.input(query); const schema=await this.schema(input.branch);
-    const result=await this.db.raw(`UPDATE \`${schema}\`.\`0_cv_header\` SET cv_printed=1 WHERE cv_no=?`,[input.cvNo]);
-    if (!result) throw new NotFoundException('Check Voucher was not found.');
+    await this.db.raw(`UPDATE \`${schema}\`.\`0_cv_header\` SET cv_printed=1 WHERE ${input.cvId ? 'id = ?' : 'cv_no = ?'}`,[input.cvId ?? input.cvNo]);
     return {ok:true};
   }
 
@@ -199,7 +231,7 @@ export class CheckprintService {
     return {id:Number((write as any)?.[0]?.insertId??0),checkRef:ref};
   }
 
-  private input(query:unknown):{branch:number;cvNo:string}{const x=query&&typeof query==='object'?query as Record<string,unknown>:{};const branch=Number(x.branch),cvNo=String(x.cv_no??'').trim();if(!Number.isInteger(branch)||branch<0||!cvNo)throw new BadRequestException('A valid branch and CV number are required.');return{branch,cvNo};}
+  private input(query:unknown):{branch:number;cvNo:string;cvId:number|null}{const x=query&&typeof query==='object'?query as Record<string,unknown>:{};const branch=Number(x.branch),cvNo=String(x.cv_no??'').trim(),rawId=x.cv_id??x.id,cvId=rawId===undefined||rawId===null||rawId===''?null:Number(rawId);if(!Number.isInteger(branch)||branch<0||(cvId!==null&&(!Number.isInteger(cvId)||cvId<=0))||(!cvNo&&cvId===null))throw new BadRequestException('A valid branch and CV number or ID are required.');return{branch,cvNo,cvId};}
   private inputBranch(query:unknown):{branch:number;source:Record<string,unknown>}{const source=query&&typeof query==='object'?query as Record<string,unknown>:{};const branch=Number(source.branch);if(!Number.isInteger(branch)||branch<0)throw new BadRequestException('A valid branch is required.');return{branch,source};}
   private async schema(branch:number):Promise<string>{const result=await this.db.raw(`SELECT id,config_db_key AS configDbKey,aria_db AS ariaDb FROM transfers.\`0_branches\` WHERE inactive=0 AND (config_db_key=? OR id=?)`,[branch,branch]);const rows=checkprintRows<any>(result);const row=rows.find(x=>Number(x.configDbKey)===branch)??rows.find(x=>Number(x.id)===branch);const schema=String(row?.ariaDb??'').trim();if(!IDENTIFIER.test(schema))throw new NotFoundException('Selected branch was not found.');return schema;}
   private date(value:unknown):string{if(!value)return '';if(value instanceof Date)return value.toISOString().slice(0,10);return String(value).slice(0,10);}
